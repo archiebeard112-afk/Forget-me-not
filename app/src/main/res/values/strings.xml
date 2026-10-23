@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Forget-me-not</string>
+    <string name="quick_add_label">Add to Forget-me-not</string>
+    <string name="tile_label">+ Task</string>
+</resources>
