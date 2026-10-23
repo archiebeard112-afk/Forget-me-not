@@ -10,7 +10,9 @@ import android.service.quicksettings.TileService
 class QuickAddTileService : TileService() {
     @SuppressLint("StartActivityAndCollapseDeprecated")
     override fun onClick() {
-        val intent = Intent(this, QuickAddActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // Locked: the lock-screen pop-up (it asks to unlock instead if that's turned off in Settings).
+        val target = if (isLocked) LockScreenAddActivity::class.java else QuickAddActivity::class.java
+        val intent = Intent(this, target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val launch = {
             if (Build.VERSION.SDK_INT >= 34) {
                 startActivityAndCollapse(
@@ -20,7 +22,6 @@ class QuickAddTileService : TileService() {
                 @Suppress("DEPRECATION") startActivityAndCollapse(intent)
             }
         }
-        // Work tasks stay behind the lock: ask to unlock first, then open quick add.
-        if (isLocked) unlockAndRun(launch) else launch()
+        launch()
     }
 }

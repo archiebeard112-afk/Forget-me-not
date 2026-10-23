@@ -10,7 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.forgetmenot.app.MainActivity
 import com.forgetmenot.app.R
 import com.forgetmenot.app.data.Task
-import com.forgetmenot.app.quickadd.QuickAddActivity
+import com.forgetmenot.app.quickadd.LockScreenAddActivity
 import com.forgetmenot.app.ui.formatDue
 
 object Notifications {
@@ -76,7 +76,8 @@ object Notifications {
     fun showQuickAdd(context: Context) {
         val pi = PendingIntent.getActivity(
             context, QUICK_ADD_ID,
-            Intent(context, QuickAddActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            // Opens over the lock screen when locked, or the normal quick add when unlocked.
+            Intent(context, LockScreenAddActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val n = NotificationCompat.Builder(context, CHANNEL_QUICK_ADD)

@@ -64,6 +64,7 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
     var quietEnd by remember { mutableIntStateOf(prefs.quietEndMinute) }
     var nagDays by remember { mutableStateOf(prefs.nagDays) }
     var pinned by remember { mutableStateOf(prefs.pinnedQuickAdd) }
+    var lockScreen by remember { mutableStateOf(prefs.lockScreenAdd) }
     var instant by remember { mutableStateOf(prefs.instantSave) }
     var instantDue by remember { mutableStateOf(prefs.instantDue) }
     var powerMode by remember { mutableStateOf(prefs.powerButtonMode) }
@@ -197,6 +198,17 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
                     pinned = it; prefs.pinnedQuickAdd = it
                     if (it) Notifications.showQuickAdd(context) else Notifications.hideQuickAdd(context)
                 })
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Add tasks from the lock screen")
+                    Text(
+                        "The tile and pinned notification open a pop-up without unlocking. It can only add tasks, " +
+                            "and Save needs your fingerprint, face or PIN. Off: unlock first.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Switch(lockScreen, { lockScreen = it; prefs.lockScreenAdd = it })
             }
             Text(
                 "Quick Settings tile: swipe down twice, tap the pencil icon, and drag \"+ Task\" into your tiles.",

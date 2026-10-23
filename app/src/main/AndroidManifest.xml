@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -41,6 +42,17 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+
+        <!-- Add a task over the lock screen; Save needs biometrics. -->
+        <activity
+            android:name=".quickadd.LockScreenAddActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:taskAffinity="com.forgetmenot.app.lockscreen"
+            android:theme="@style/Theme.ForgetMeNot.Popup"
+            android:windowSoftInputMode="adjustNothing|stateVisible"
+            tools:targetApi="27" />
 
         <!-- Pop-up over the current app: power button, shared text, selected text. -->
         <activity

@@ -42,6 +42,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("pinned_quick_add", false)
         set(v) = sp.edit().putBoolean("pinned_quick_add", v).apply()
 
+    /** The "+ Task" tile and pinned notification add tasks over the lock screen (Save needs biometrics). */
+    var lockScreenAdd: Boolean
+        get() = sp.getBoolean("lock_screen_add", true)
+        set(v) = sp.edit().putBoolean("lock_screen_add", v).apply()
+
     /** Shared or selected text is saved straight away instead of opening quick add. */
     var instantSave: Boolean
         get() = sp.getBoolean("instant_save", true)
