@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -32,6 +34,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,7 +57,7 @@ import com.forgetmenot.app.ui.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuickAddScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
+fun QuickAddScreen(vm: QuickAddViewModel, onClose: () -> Unit, inSheet: Boolean = false) {
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let(vm::loadImage)
     }
@@ -61,8 +65,9 @@ fun QuickAddScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
         TopAppBar(
             title = { Text(if (vm.phase == Phase.Review) "Check & save" else "Quick add") },
             navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") } },
+            windowInsets = if (inSheet) WindowInsets(0) else TopAppBarDefaults.windowInsets,
         )
-    }) { padding ->
+    }, contentWindowInsets = if (inSheet) WindowInsets.ime else ScaffoldDefaults.contentWindowInsets) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
@@ -76,7 +81,13 @@ fun QuickAddScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Spacer(Modifier.size(16.dp))
-                        Text(if (vm.image != null) "Reading screenshot…" else "Reading message…")
+                        Text(
+                            when {
+                                vm.screenText != null -> "Reading your screen…"
+                                vm.image != null -> "Reading screenshot…"
+                                else -> "Reading message…"
+                            }
+                        )
                     }
                 }
                 Phase.Review -> ReviewPhase(vm, onClose)
@@ -105,6 +116,19 @@ private fun InputPhase(vm: QuickAddViewModel, onClose: () -> Unit, onPickImage: 
         }
     }
 
+    vm.screenText?.let { text ->
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+            Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Captured ${text.lines().size} lines of text from your screen",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = vm::clearScreen) { Icon(Icons.Default.Close, "Discard screen text") }
+            }
+        }
+    }
+
     vm.image?.let { bmp ->
         Box {
             Image(
@@ -126,11 +150,18 @@ private fun InputPhase(vm: QuickAddViewModel, onClose: () -> Unit, onPickImage: 
         modifier = Modifier.fillMaxWidth().focusRequester(focus),
     )
 
-    if (vm.image == null) DueEditor(vm.dueAt) { vm.dueAt = it }
+    if (vm.image == null && vm.screenText == null) DueEditor(vm.dueAt) { vm.dueAt = it }
 
-    val canRead = vm.hasApiKey && (vm.input.isNotBlank() || vm.image != null)
+    val hasScreen = vm.screenText != null
+    val canRead = vm.hasApiKey && (vm.input.isNotBlank() || vm.image != null || hasScreen)
     Button(onClick = vm::read, enabled = canRead, modifier = Modifier.fillMaxWidth()) {
-        Text(if (vm.image != null) "✨ Read screenshot" else "✨ Read with Claude")
+        Text(
+            when {
+                hasScreen -> "✨ Read my screen"
+                vm.image != null -> "✨ Read screenshot"
+                else -> "✨ Read with Claude"
+            }
+        )
     }
     if (!vm.hasApiKey) {
         Text(
@@ -142,7 +173,7 @@ private fun InputPhase(vm: QuickAddViewModel, onClose: () -> Unit, onPickImage: 
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedButton(
             onClick = { vm.saveTyped(onClose) },
-            enabled = vm.input.isNotBlank() && vm.image == null,
+            enabled = vm.input.isNotBlank() && vm.image == null && !hasScreen,
             modifier = Modifier.weight(1f),
         ) { Text("Save as typed") }
         OutlinedButton(onClick = onPickImage, modifier = Modifier.weight(1f)) { Text("Pick screenshot") }

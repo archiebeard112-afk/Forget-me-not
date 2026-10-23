@@ -11,6 +11,7 @@ Requests arrive all day in Microsoft Teams. They're acknowledged (👍) and then
 ## Capture paths
 | Path | How |
 |---|---|
+| Hold power button | App is the default digital assistant (`VoiceInteractionService`). The assist session gets the screen's text (`AssistStructure`) and, if allowed, a screenshot, then opens a bottom-sheet pop-up that starts reading immediately. If the app on screen blocks capture (e.g. a managed work profile), the pop-up opens empty for typing. |
 | Quick Settings tile "+ Task" | Opens quick add (asks to unlock first, so work data stays private). |
 | Pinned notification | Optional, always-visible "+ Add task". |
 | Copy → quick add | Teams on Android has no share for messages; quick add offers the copied text. |
@@ -18,6 +19,7 @@ Requests arrive all day in Microsoft Teams. They're acknowledged (👍) and then
 | Share / select text | `ACTION_SEND` text and `ACTION_PROCESS_TEXT`. |
 
 ## Reading messages with Claude
+- Screen text from the power-button capture is sent along with the screenshot; Claude uses the text for exact spelling of codes and the image for who said what.
 - Sends the text and/or screenshot (downscaled to ≤2000px JPEG) to the Messages API with a JSON schema (`output_config.format`).
 - Default model `claude-opus-5-5`; `claude-haiku-5-5` selectable in Settings as the cheaper option.
 - Each draft has: title, requester, details (codes copied exactly), due (ISO / ASAP / none), high priority, warnings.

@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.forgetmenot.app.assist.AssistService
 import com.forgetmenot.app.data.Prefs
 import com.forgetmenot.app.reminders.Notifications
 
@@ -121,6 +122,30 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
             }
             Text(
                 "Quick Settings tile: swipe down twice, tap the pencil icon, and drag \"+ Task\" into your tiles.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+
+            HorizontalDivider()
+            Text("Hold the power button", style = MaterialTheme.typography.titleMedium)
+            val active = remember { AssistService.isActive(context) }
+            Text(
+                if (active) {
+                    "✅ Forget-me-not is your digital assistant. Hold the power button on any screen to turn it into a task."
+                } else {
+                    "Make Forget-me-not your digital assistant app, and holding the power button will read what's on " +
+                        "screen (like a Teams chat) and pop up a drafted task. This replaces Google Assistant / Gemini " +
+                        "on that button; you can switch back any time."
+                },
+                style = MaterialTheme.typography.bodySmall,
+            )
+            OutlinedButton(onClick = {
+                val intent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
+                runCatching { context.startActivity(intent) }
+                    .onFailure { context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
+            }) { Text(if (active) "Change digital assistant" else "Choose digital assistant") }
+            Text(
+                "In that screen, also turn on \"Analyze text on screen\" and \"Use screenshot\" (names vary by phone). " +
+                    "On Samsung, also set Settings → Advanced features → Side button → Press and hold → Digital assistant.",
                 style = MaterialTheme.typography.bodySmall,
             )
 

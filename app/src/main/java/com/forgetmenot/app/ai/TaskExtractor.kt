@@ -34,7 +34,13 @@ class ExtractionException(message: String) : Exception(message)
 /** Turns a pasted message or a chat screenshot into draft tasks. */
 class TaskExtractor(private val apiKey: String, private val model: String) {
 
-    fun extract(text: String?, imageBase64: String?, imageMediaType: String?): Extraction {
+    fun extract(
+        text: String?,
+        screenText: String?,
+        screenApp: String?,
+        imageBase64: String?,
+        imageMediaType: String?,
+    ): Extraction {
         val zone = ZoneId.systemDefault()
         val now = ZonedDateTime.now(zone)
         val blocks = mutableListOf<ContentBlockParam>()
@@ -54,7 +60,18 @@ class TaskExtractor(private val apiKey: String, private val model: String) {
             append("Current time: ")
             append(now.format(DateTimeFormatter.ofPattern("EEEE yyyy-MM-dd HH:mm")))
             append(" (").append(zone.id).append(").\n")
-            if (imageBase64 != null) append("The image is a screenshot of a work chat taken just now.\n")
+            if (screenText != null) {
+                append("Text captured just now from the user's screen")
+                if (!screenApp.isNullOrBlank()) append(" in ").append(screenApp)
+                append(", in screen order. It includes app labels and buttons; ignore those.\n")
+                append("\"\"\"\n").append(screenText).append("\n\"\"\"\n")
+                if (imageBase64 != null) {
+                    append("The image is a screenshot of the same screen. Use it to see who sent what; ")
+                    append("use the captured text for the exact spelling of codes and numbers.\n")
+                }
+            } else if (imageBase64 != null) {
+                append("The image is a screenshot of a work chat taken just now.\n")
+            }
             if (!text.isNullOrBlank()) append("Message:\n\"\"\"\n").append(text.trim()).append("\n\"\"\"\n")
         }
         blocks += ContentBlockParam.ofText(TextBlockParam.builder().text(instruction).build())

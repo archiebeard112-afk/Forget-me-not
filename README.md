@@ -6,6 +6,7 @@ Capture a task in seconds, or hand it a Teams screenshot, and it nags you until 
 ## Features
 
 - **Quick capture**: a "+ Task" Quick Settings tile, an optional pinned "+ Add task" notification, and an in-app Add button.
+- **Hold the power button**: with Forget-me-not set as your digital assistant app, holding the power button reads what's on screen (e.g. a Teams chat) and pops up a drafted task over it. No screenshot needed.
 - **Copied messages**: copy a Teams message, open quick add, tap **Use this**.
 - **Screenshots**: share a screenshot to Forget-me-not (or pick one in quick add). Claude reads the chat and drafts the task: what, who asked, details (codes copied exactly), when it's due, and warnings for anything cut off.
 - **Text from anywhere**: works from the share sheet and the text-selection menu.
@@ -23,7 +24,8 @@ Every push builds an APK with GitHub Actions.
 2. Tap `forget-me-not.apk`, then open the download. Android asks you to allow installs from your browser the first time.
 3. Open the app and allow notifications.
 4. In **Settings**: paste an Anthropic API key (for screenshot reading), and tap **Allow running in background** so Samsung/Xiaomi battery savers don't kill reminders.
-5. Add the tile: swipe down twice, tap the pencil, drag **+ Task** into your tiles.
+5. Optional, for the power button: **Settings → Choose digital assistant** → Forget-me-not, and turn on its screen-text and screenshot options. On Samsung also set **Settings → Advanced features → Side button → Press and hold → Digital assistant**. This replaces Gemini/Google Assistant on that button.
+6. Add the tile: swipe down twice, tap the pencil, drag **+ Task** into your tiles.
 
 ## Build locally
 

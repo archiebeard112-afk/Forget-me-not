@@ -44,6 +44,10 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
     var dueAt by mutableStateOf<Long?>(null)
     var image by mutableStateOf<Bitmap?>(null)
         private set
+    /** Text read off the screen when the power button was held. */
+    var screenText by mutableStateOf<String?>(null)
+        private set
+    private var screenApp: String? = null
     var clipboardSuggestion by mutableStateOf<String?>(null)
     var phase by mutableStateOf<Phase>(Phase.Input)
         private set
@@ -69,6 +73,20 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         image = null
     }
 
+    /** Called by the power-button pop-up with what was on screen; starts reading right away. */
+    fun loadFromScreen(text: String?, screenshot: Bitmap?, appPackage: String?) {
+        screenText = text
+        image = screenshot?.let(::shrink)
+        screenApp = appName(appPackage)
+        source = screenApp?.let { "Screen ($it)" } ?: "Screen"
+        if (hasApiKey && (text != null || image != null)) read()
+    }
+
+    fun clearScreen() {
+        screenText = null
+        image = null
+    }
+
     fun useClipboard() {
         clipboardSuggestion?.let { input = it; source = "Copied message" }
         clipboardSuggestion = null
@@ -78,7 +96,8 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
     fun read() {
         val text = input.takeIf { it.isNotBlank() }
         val img = image
-        if (text == null && img == null) return
+        val screen = screenText
+        if (text == null && img == null && screen == null) return
         error = null
         phase = Phase.Reading
         viewModelScope.launch {
@@ -89,7 +108,8 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
                         it.compress(Bitmap.CompressFormat.JPEG, 88, out)
                         Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
                     }
-                    TaskExtractor(app.prefs.apiKey, app.prefs.model).extract(text, b64, "image/jpeg")
+                    TaskExtractor(app.prefs.apiKey, app.prefs.model)
+                        .extract(text, screen, screenApp, b64, "image/jpeg")
                 }
                 drafts.clear()
                 skipped.clear()
@@ -162,11 +182,21 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun shrink(src: Bitmap): Bitmap {
+    private fun shrink(original: Bitmap): Bitmap {
+        // Screenshots from the system can be hardware bitmaps, which can't be scaled directly.
+        val src = if (original.config == Bitmap.Config.HARDWARE) original.copy(Bitmap.Config.ARGB_8888, false) else original
         val longEdge = maxOf(src.width, src.height)
         if (longEdge <= MAX_EDGE) return src
         val scale = MAX_EDGE.toFloat() / longEdge
         return Bitmap.createScaledBitmap(src, (src.width * scale).toInt(), (src.height * scale).toInt(), true)
+    }
+
+    private fun appName(pkg: String?): String? = when {
+        pkg == null -> null
+        pkg.startsWith("com.microsoft.teams") -> "Teams"
+        pkg.startsWith("com.microsoft.office.outlook") -> "Outlook"
+        pkg.startsWith("com.Slack") -> "Slack"
+        else -> null
     }
 
     private companion object {
