@@ -54,6 +54,20 @@
             android:windowSoftInputMode="adjustNothing|stateVisible"
             tools:targetApi="27" />
 
+        <!-- Second app icon, "Quick add", so the pop-up can be picked as a Samsung lock screen
+             shortcut. Locked: the lock-screen pop-up. Unlocked: the normal quick add. -->
+        <activity-alias
+            android:name=".QuickAddShortcut"
+            android:exported="true"
+            android:icon="@mipmap/ic_quick_add"
+            android:label="@string/quick_add_shortcut_label"
+            android:targetActivity=".quickadd.LockScreenAddActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Pop-up over the current app: power button, shared text, selected text. -->
         <activity
             android:name=".quickadd.CapturePopupActivity"

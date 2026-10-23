@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- The app's flower, smaller, with a "+" badge -->
+    <path android:fillColor="#4A7BE0" android:pathData="M48,34m-8.5,0a8.5,8.5 0,1 1,17 0a8.5,8.5 0,1 1,-17 0" />
+    <path android:fillColor="#4A7BE0" android:pathData="M65.6,46.8m-8.5,0a8.5,8.5 0,1 1,17 0a8.5,8.5 0,1 1,-17 0" />
+    <path android:fillColor="#4A7BE0" android:pathData="M58.9,67.5m-8.5,0a8.5,8.5 0,1 1,17 0a8.5,8.5 0,1 1,-17 0" />
+    <path android:fillColor="#4A7BE0" android:pathData="M37.1,67.5m-8.5,0a8.5,8.5 0,1 1,17 0a8.5,8.5 0,1 1,-17 0" />
+    <path android:fillColor="#4A7BE0" android:pathData="M30.4,46.8m-8.5,0a8.5,8.5 0,1 1,17 0a8.5,8.5 0,1 1,-17 0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M48,52.5m-9,0a9,9 0,1 1,18 0a9,9 0,1 1,-18 0" />
+    <path android:fillColor="#F5C542" android:pathData="M48,52.5m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#1F3F8F" android:pathData="M74,72m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M72.2,64.5h3.6v5.7h5.7v3.6h-5.7v5.7h-3.6v-5.7h-5.7v-3.6h5.7z" />
+</vector>

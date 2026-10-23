@@ -8,7 +8,7 @@ Capture a task in seconds, or hand it a Teams screenshot, and it nags you until 
 - **Quick capture**: a "+ Task" Quick Settings tile, an optional pinned "+ Add task" notification, and an in-app Add button.
 - **Hold the power button**: with Forget-me-not set as your digital assistant app, holding the power button puts a glowing halo around the screen with the app (e.g. a Teams chat) still visible. Tap the message itself and a pop-up lets you adjust the wording, who asked, due time and priority; **Done** saves it. No AI needed. A **List** view of the screen's text is the fallback, and Claude can draft the task instead if you prefer.
 - **One-tap save**: highlight text in any app (or share it) and pick **Add to Forget-me-not**. It's saved immediately, with a pop-up to change the due time, mark it high priority, edit or undo.
-- **From the lock screen**: the "+ Task" tile or pinned notification opens a pop-up over the lock screen without unlocking. It can only add tasks, and **Save** needs your fingerprint, face or PIN; the phone stays locked.
+- **From the lock screen**: the "+ Task" tile or pinned notification opens a pop-up over the lock screen without unlocking. It can only add tasks, and **Save** needs your fingerprint, face or PIN; the phone stays locked. A second app icon, **Quick add**, opens the same pop-up and can be chosen as a Samsung lock screen shortcut.
 - **Copied messages**: copy a Teams message, open quick add, tap **Use this**.
 - **Screenshots**: share a screenshot to Forget-me-not (or pick one in quick add). Claude reads the chat and drafts the task: what, who asked, details (codes copied exactly), when it's due, and warnings for anything cut off.
 - **Text from anywhere**: works from the share sheet and the text-selection menu.
