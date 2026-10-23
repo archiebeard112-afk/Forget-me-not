@@ -132,7 +132,7 @@ private fun PhaseContent(
             }
             Phase.Review -> ReviewPhase(vm, onClose)
             Phase.Saved -> SavedPhase(vm, onClose, onEdit)
-            Phase.Pick -> Unit
+            Phase.Pick, Phase.Halo -> Unit
         }
         Spacer(Modifier.size(8.dp))
     }

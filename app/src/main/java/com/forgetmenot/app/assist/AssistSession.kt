@@ -14,13 +14,13 @@ import androidx.annotation.RequiresApi
 import com.forgetmenot.app.quickadd.CapturePopupActivity
 
 /**
- * Runs when the power button is held. Collects the screen's text (and a screenshot when
- * the user allows it), then opens the quick-add pop-up over the current app.
+ * Runs when the power button is held. Collects the screen's text and where it sits (and a
+ * screenshot when the user allows it), then opens the pop-up over the current app.
  */
 class AssistSession(context: Context) : VoiceInteractionSession(context) {
     private val handler = Handler(Looper.getMainLooper())
     private var wantScreenshot = false
-    private var screenText: String? = null
+    private var screenItems: List<ScreenItem> = emptyList()
     private var appPackage: String? = null
     private var launched = false
 
@@ -29,7 +29,7 @@ class AssistSession(context: Context) : VoiceInteractionSession(context) {
         // The pop-up is an activity; no session window needed.
         setUiEnabled(false)
         launched = false
-        screenText = null
+        screenItems = emptyList()
         appPackage = null
         wantScreenshot = showFlags and SHOW_WITH_SCREENSHOT != 0
     }
@@ -56,7 +56,7 @@ class AssistSession(context: Context) : VoiceInteractionSession(context) {
 
     private fun handleStructure(structure: AssistStructure?) {
         if (structure != null) {
-            screenText = ScreenText.extract(structure)
+            screenItems = ScreenText.extract(structure)
             appPackage = structure.activityComponent?.packageName
         }
         if (!wantScreenshot) launch(null)
@@ -70,7 +70,7 @@ class AssistSession(context: Context) : VoiceInteractionSession(context) {
         if (launched) return
         launched = true
         handler.removeCallbacksAndMessages(null)
-        AssistInbox.put(AssistInbox.Capture(screenText, screenshot, appPackage), this)
+        AssistInbox.put(AssistInbox.Capture(screenItems, screenshot, appPackage), this)
         val intent = Intent(context, CapturePopupActivity::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             startAssistantActivity(intent)

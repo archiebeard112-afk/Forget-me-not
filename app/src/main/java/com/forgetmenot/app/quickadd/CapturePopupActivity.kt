@@ -12,8 +12,9 @@ import com.forgetmenot.app.assist.AssistInbox
 import com.forgetmenot.app.ui.ForgetMeNotTheme
 
 /**
- * The pop-up shown over the current app: after holding the power button (pick lines from
- * the screen), or when text is shared / selected into Forget-me-not (saved in one tap).
+ * Shown over the current app: after holding the power button (halo: tap the message on
+ * screen, or a list of the screen's text), or when text is shared / selected into
+ * Forget-me-not (saved in one tap).
  */
 class CapturePopupActivity : ComponentActivity() {
     private val vm: QuickAddViewModel by viewModels()
@@ -34,13 +35,17 @@ class CapturePopupActivity : ComponentActivity() {
                 vm.source = if (intent.action == Intent.ACTION_PROCESS_TEXT) "Selected text" else "Shared message"
                 if (app.prefs.instantSave && sharedText.isNotBlank()) vm.saveShared(sharedText) else vm.input = sharedText
             } else {
-                AssistInbox.take()?.let { vm.loadFromScreen(it.screenText, it.screenshot, it.appPackage) }
+                AssistInbox.take()?.let { vm.loadFromScreen(it.screenItems, it.screenshot, it.appPackage) }
             }
         }
         setContent {
             ForgetMeNotTheme {
-                PopupSheet(onDismiss = { finish() }) {
-                    QuickAddScreen(vm, onClose = { finish() }, onEdit = ::openTask, inSheet = true)
+                if (vm.phase == Phase.Halo) {
+                    HaloScreen(vm, onClose = { finish() })
+                } else {
+                    PopupSheet(onDismiss = { finish() }) {
+                        QuickAddScreen(vm, onClose = { finish() }, onEdit = ::openTask, inSheet = true)
+                    }
                 }
             }
         }

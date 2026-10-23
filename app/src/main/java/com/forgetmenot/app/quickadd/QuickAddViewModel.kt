@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import com.forgetmenot.app.ForgetMeNotApp
 import com.forgetmenot.app.ai.ExtractionException
 import com.forgetmenot.app.ai.TaskExtractor
+import com.forgetmenot.app.assist.ScreenItem
 import com.forgetmenot.app.assist.ScreenLines
 import com.forgetmenot.app.data.DueDefaults
 import com.forgetmenot.app.data.Prefs
@@ -41,8 +42,10 @@ sealed interface Phase {
     data object Reading : Phase
     /** Check Claude's drafts. */
     data object Review : Phase
-    /** Tap the lines from the screen to save (power button, no AI). */
+    /** Tap the lines from the screen to save, as a list (power button, no AI). */
     data object Pick : Phase
+    /** Tap the message right on the screen, inside a glowing halo (power button, no AI). */
+    data object Halo : Phase
     /** Already saved; adjust or undo. */
     data object Saved : Phase
 }
@@ -58,6 +61,8 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
     var screenText by mutableStateOf<String?>(null)
         private set
     private var screenApp: String? = null
+    /** What was on screen, with positions; [screenLines] holds the same items' text, same order. */
+    val screenItems = mutableStateListOf<ScreenItem>()
     val screenLines = mutableStateListOf<String>()
     val selectedLines = mutableStateListOf<Int>()
     var clipboardSuggestion by mutableStateOf<String?>(null)
@@ -93,7 +98,9 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
     }
 
     /** Called by the power-button pop-up with what was on screen. */
-    fun loadFromScreen(text: String?, screenshot: Bitmap?, appPackage: String?) {
+    fun loadFromScreen(items: List<ScreenItem>, screenshot: Bitmap?, appPackage: String?) {
+        val cleaned = ScreenLines.clean(items)
+        val text = cleaned.joinToString("\n") { it.text }.ifBlank { null }
         screenText = text
         image = screenshot?.let(::shrink)
         screenApp = appName(appPackage)
@@ -102,19 +109,29 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
             read()
             return
         }
+        screenItems.clear()
+        screenItems += cleaned
         screenLines.clear()
-        screenLines += ScreenLines.split(text)
-        if (screenLines.isEmpty()) {
-            error = "Couldn't read any text on that screen. Type the task instead."
-            phase = Phase.Input
-        } else {
-            phase = Phase.Pick
+        screenLines += cleaned.map { it.text }
+        phase = when {
+            screenLines.isEmpty() -> {
+                error = "Couldn't read any text on that screen. Type the task instead."
+                Phase.Input
+            }
+            app.prefs.powerButtonMode == Prefs.POWER_HALO -> Phase.Halo
+            else -> Phase.Pick
         }
+    }
+
+    /** Switch from the halo to the list of the screen's text. */
+    fun showList() {
+        phase = Phase.Pick
     }
 
     fun clearScreen() {
         screenText = null
         image = null
+        screenItems.clear()
         screenLines.clear()
         selectedLines.clear()
     }

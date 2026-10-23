@@ -6,7 +6,7 @@ Capture a task in seconds, or hand it a Teams screenshot, and it nags you until 
 ## Features
 
 - **Quick capture**: a "+ Task" Quick Settings tile, an optional pinned "+ Add task" notification, and an in-app Add button.
-- **Hold the power button**: with Forget-me-not set as your digital assistant app, holding the power button pops up the text on screen (e.g. a Teams chat). Tap the message, tap **Save**. No AI needed; optionally Claude can draft the task instead.
+- **Hold the power button**: with Forget-me-not set as your digital assistant app, holding the power button puts a glowing halo around the screen with the app (e.g. a Teams chat) still visible. Tap the message itself, tap **Save**. No AI needed. A **List** view of the screen's text is the fallback, and Claude can draft the task instead if you prefer.
 - **One-tap save**: highlight text in any app (or share it) and pick **Add to Forget-me-not**. It's saved immediately, with a pop-up to change the due time, mark it high priority, edit or undo.
 - **Copied messages**: copy a Teams message, open quick add, tap **Use this**.
 - **Screenshots**: share a screenshot to Forget-me-not (or pick one in quick add). Claude reads the chat and drafts the task: what, who asked, details (codes copied exactly), when it's due, and warnings for anything cut off.

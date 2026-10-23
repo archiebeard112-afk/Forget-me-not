@@ -11,7 +11,7 @@ Requests arrive all day in Microsoft Teams. They're acknowledged (👍) and then
 ## Capture paths
 | Path | How |
 |---|---|
-| Hold power button | App is the default digital assistant (`VoiceInteractionService`). The assist session gets the screen's text (`AssistStructure`) and, if allowed, a screenshot, then opens a bottom-sheet pop-up. Default mode lists the screen's lines to tap and save (no AI; sender guessed from the line above). Optional mode sends the screen to Claude for a drafted task. If the app on screen blocks capture, the pop-up opens empty for typing. |
+| Hold power button | App is the default digital assistant (`VoiceInteractionService`). The assist session gets the screen's text (`AssistStructure`) and, if allowed, a screenshot, then opens a bottom-sheet pop-up. Default mode is the halo: a transparent overlay with a glowing edge over the live app, with tap targets at each text item's on-screen bounds (smallest item wins on overlap); tap to select, Save to save (no AI; sender guessed from the line above). List mode shows the same items as tappable lines. Optional mode sends the screen to Claude for a drafted task. If the app on screen blocks capture, the pop-up opens empty for typing. |
 | One-tap save | Shared and selected text (`ACTION_SEND`, `ACTION_PROCESS_TEXT`) is saved immediately with the default due time from Settings, then a pop-up offers due time, priority, edit and undo. Can be switched off to open quick add instead. |
 | Quick Settings tile "+ Task" | Opens quick add (asks to unlock first, so work data stays private). |
 | Pinned notification | Optional, always-visible "+ Add task". |

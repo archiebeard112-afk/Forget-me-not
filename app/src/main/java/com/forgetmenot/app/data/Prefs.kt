@@ -54,7 +54,7 @@ class Prefs(context: Context) {
 
     /** What holding the power button does; one of the POWER_* constants. */
     var powerButtonMode: String
-        get() = sp.getString("power_mode", POWER_PICK) ?: POWER_PICK
+        get() = sp.getString("power_mode", POWER_HALO) ?: POWER_HALO
         set(v) = sp.edit().putString("power_mode", v).apply()
 
     companion object {
@@ -75,6 +75,7 @@ class Prefs(context: Context) {
             DUE_NONE to "No due time",
         )
 
+        const val POWER_HALO = "halo"
         const val POWER_PICK = "pick"
         const val POWER_CLAUDE = "claude"
     }

@@ -91,7 +91,10 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
                 },
                 style = MaterialTheme.typography.bodySmall,
             )
-            Choice("Tap the message to save it (no AI)", powerMode == Prefs.POWER_PICK) {
+            Choice("Halo: tap the message right on the screen (no AI)", powerMode == Prefs.POWER_HALO) {
+                powerMode = Prefs.POWER_HALO; prefs.powerButtonMode = Prefs.POWER_HALO
+            }
+            Choice("List of the text on screen (no AI)", powerMode == Prefs.POWER_PICK) {
                 powerMode = Prefs.POWER_PICK; prefs.powerButtonMode = Prefs.POWER_PICK
             }
             Choice("Claude reads the screen and drafts the task (needs API key)", powerMode == Prefs.POWER_CLAUDE) {
