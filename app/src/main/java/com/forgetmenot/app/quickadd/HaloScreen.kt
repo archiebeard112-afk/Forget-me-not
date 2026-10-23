@@ -13,6 +13,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -36,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -45,6 +49,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.forgetmenot.app.assist.ScreenLines
 
@@ -67,7 +72,16 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
         label = "pulse",
     )
     val density = LocalDensity.current
-    // Follow the phone's rounded screen corners where Android reports them.
+    // The status bar and navigation buttons are drawn over every app, and while the halo is
+    // see-through they take Teams' (opaque) colours. Keep the glow inside them so all edges show.
+    val bars = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    val inset = Rect(
+        bars.getLeft(density, LayoutDirection.Ltr).toFloat(),
+        bars.getTop(density).toFloat(),
+        bars.getRight(density, LayoutDirection.Ltr).toFloat(),
+        bars.getBottom(density).toFloat(),
+    )
+    // Follow the phone's rounded screen corners where the glow meets the screen edge.
     val screenCorner = remember {
         val reported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             view.rootWindowInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)?.radius
@@ -95,14 +109,17 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                     start = Offset.Zero,
                     end = Offset(size.width, size.height),
                 )
-                // Each stroke sits fully inside the screen so all four edges show.
+                // Each stroke sits fully inside the visible area so all four edges show. Below a
+                // status bar the corner is a gentler curve than the screen's own.
+                val area = Rect(inset.left, inset.top, size.width - inset.right, size.height - inset.bottom)
+                val corner = if (inset.top > 0f || inset.bottom > 0f) 28.dp.toPx() else screenCorner
                 for ((width, alpha) in listOf(28.dp to 0.12f, 16.dp to 0.25f, 5.dp to 0.95f)) {
                     val half = width.toPx() / 2
                     drawRoundRect(
                         glow,
-                        topLeft = Offset(half, half),
-                        size = Size(size.width - 2 * half, size.height - 2 * half),
-                        cornerRadius = CornerRadius((screenCorner - half).coerceAtLeast(0f)),
+                        topLeft = Offset(area.left + half, area.top + half),
+                        size = Size(area.width - 2 * half, area.height - 2 * half),
+                        cornerRadius = CornerRadius((corner - half).coerceAtLeast(0f)),
                         style = Stroke(width.toPx()),
                         alpha = alpha * pulse,
                     )
