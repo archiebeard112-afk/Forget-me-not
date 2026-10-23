@@ -13,20 +13,11 @@ import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,10 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -45,8 +36,12 @@ import androidx.lifecycle.lifecycleScope
 import com.forgetmenot.app.app
 import com.forgetmenot.app.data.DueDefaults
 import com.forgetmenot.app.data.Task
-import com.forgetmenot.app.ui.DueEditor
 import com.forgetmenot.app.ui.ForgetMeNotTheme
+import com.forgetmenot.app.ui.LineIcons
+import com.forgetmenot.app.ui.ReminderCard
+import com.forgetmenot.app.ui.SheetActions
+import com.forgetmenot.app.ui.SheetHeader
+import com.forgetmenot.app.ui.TaskHeadline
 import kotlinx.coroutines.launch
 
 /**
@@ -81,47 +76,45 @@ class LockScreenAddActivity : FragmentActivity() {
     private fun LockScreenForm() {
         var text by rememberSaveable { mutableStateOf("") }
         var dueAt by rememberSaveable { mutableStateOf(DueDefaults.instant(app.prefs)) }
+        var nag by rememberSaveable { mutableStateOf(app.prefs.defaultNagMinutes) }
         var high by rememberSaveable { mutableStateOf(false) }
         val focus = remember { FocusRequester() }
         LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
 
         Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 18.dp, end = 18.dp, bottom = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("New task", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { finish() }) { Icon(Icons.Default.Close, "Cancel") }
-            }
-            OutlinedTextField(
-                text, { text = it },
-                label = { Text("What do you need to remember?") },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth().focusRequester(focus),
+            SheetHeader("New reminder") { finish() }
+            TaskHeadline(text, { text = it }, modifier = Modifier.focusRequester(focus))
+            ReminderCard(
+                dueAt = dueAt,
+                onDue = { dueAt = it },
+                nagMinutes = nag,
+                onNag = { nag = it },
+                highPriority = high,
+                onHighPriority = { high = it },
             )
-            DueEditor(dueAt) { dueAt = it }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("High priority", Modifier.weight(1f))
-                Switch(high, { high = it })
-            }
+            SheetActions(
+                secondary = "Cancel",
+                onSecondary = { finish() },
+                primary = "Save with fingerprint",
+                onPrimary = { confirmThenSave(text, dueAt, high, nag) },
+                enabled = text.isNotBlank(),
+                primaryIcon = LineIcons.Fingerprint,
+            )
             Text(
-                "You'll confirm with your fingerprint or face. Your phone stays locked.",
+                "Your phone stays locked",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = { finish() }, modifier = Modifier.weight(1f)) { Text("Cancel") }
-                Button(
-                    onClick = { confirmThenSave(text, dueAt, high) },
-                    enabled = text.isNotBlank(),
-                    modifier = Modifier.weight(1f),
-                ) { Text("Save") }
-            }
         }
     }
 
-    private fun confirmThenSave(text: String, dueAt: Long?, high: Boolean) {
-        val save = { save(text, dueAt, high) }
+    private fun confirmThenSave(text: String, dueAt: Long?, high: Boolean, nag: Int) {
+        val save = { save(text, dueAt, high, nag) }
         val authenticators = BIOMETRIC_WEAK or DEVICE_CREDENTIAL
         if (BiometricManager.from(this).canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
             unlockThen(save)
@@ -150,7 +143,7 @@ class LockScreenAddActivity : FragmentActivity() {
         )
     }
 
-    private fun save(text: String, dueAt: Long?, high: Boolean) {
+    private fun save(text: String, dueAt: Long?, high: Boolean, nag: Int) {
         val trimmed = text.trim()
         val title = trimmed.lineSequence().first().take(120)
         val task = Task(
@@ -158,7 +151,7 @@ class LockScreenAddActivity : FragmentActivity() {
             notes = trimmed.takeIf { it != title },
             dueAt = dueAt,
             highPriority = high,
-            nagMinutes = app.prefs.defaultNagMinutes,
+            nagMinutes = nag,
             source = "Lock screen",
         )
         lifecycleScope.launch {

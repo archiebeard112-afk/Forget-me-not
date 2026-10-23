@@ -71,7 +71,13 @@ fun TaskListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ForgetMeNot") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        BrandMark(size = 28.dp, corner = 8.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Text("ForgetMeNot", fontWeight = FontWeight.Bold)
+                    }
+                },
                 actions = {
                     IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") }
                 },

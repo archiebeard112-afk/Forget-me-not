@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -35,6 +36,8 @@ fun PopupSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     ) {
         Surface(
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            shadowElevation = 16.dp,
             modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = maxHeight)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {},
         ) {

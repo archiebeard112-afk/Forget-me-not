@@ -7,10 +7,22 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import com.forgetmenot.app.ui.BrandMark
+import com.forgetmenot.app.ui.LineIcons
+import com.forgetmenot.app.ui.Periwinkle
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -24,11 +36,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -130,25 +140,48 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                     val item = vm.screenItems.getOrNull(i) ?: return@forEach
                     val topLeft = Offset(item.left - origin.x - pad, item.top - origin.y - pad)
                     val box = Size(item.width + 2 * pad, item.height + 2 * pad)
-                    drawRoundRect(Petal, topLeft, box, radius, alpha = 0.22f)
-                    drawRoundRect(Petal, topLeft, box, radius, style = Stroke(3.dp.toPx()))
+                    drawRoundRect(Periwinkle, topLeft, box, radius, alpha = 0.2f)
+                    drawRoundRect(Periwinkle, topLeft, box, radius, style = Stroke(3.dp.toPx()))
                 }
             },
     ) {
         Surface(
             shape = RoundedCornerShape(50),
-            shadowElevation = 6.dp,
+            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.96f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shadowElevation = 10.dp,
             modifier = Modifier.align(Alignment.TopCenter)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(top = 12.dp)
+                .padding(top = 14.dp)
                 .swallowTaps(),
         ) {
-            Row(Modifier.padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Tap the message to save", style = MaterialTheme.typography.labelLarge)
-                TextButton(onClick = vm::showList) { Text("List") }
-                IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") }
+            Row(
+                Modifier.padding(start = 10.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                BrandMark(size = 22.dp, corner = 6.dp)
+                Text(
+                    "Tap a message",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(end = 4.dp),
+                )
+                BarButton(LineIcons.List, "Show as list", vm::showList)
+                BarButton(Icons.Default.Close, "Close", onClose)
             }
         }
+    }
+}
+
+@Composable
+private fun BarButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Box(
+        Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, label, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

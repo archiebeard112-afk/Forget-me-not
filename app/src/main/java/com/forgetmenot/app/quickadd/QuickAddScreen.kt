@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -59,6 +60,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.forgetmenot.app.ui.DueEditor
+import com.forgetmenot.app.ui.FromRow
+import com.forgetmenot.app.ui.ReminderCard
+import com.forgetmenot.app.ui.SheetActions
+import com.forgetmenot.app.ui.SheetHeader
+import com.forgetmenot.app.ui.TaskHeadline
 import com.forgetmenot.app.ui.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,18 +83,17 @@ fun QuickAddScreen(
     }
     val title = when (vm.phase) {
         Phase.Review -> "Check & save"
-        Phase.Pick -> "Tap what to save"
-        Phase.Confirm -> "Save this?"
-        Phase.Saved -> "Saved ✓"
+        Phase.Pick -> "Pick a message"
+        Phase.Confirm -> "New reminder"
+        Phase.Saved -> "Saved"
+        Phase.Reading -> "Reading"
         else -> "Quick add"
     }
     if (inSheet) {
-        Column(Modifier.fillMaxWidth()) {
-            Row(Modifier.padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") }
-                Text(title, style = MaterialTheme.typography.titleLarge)
-            }
-            PhaseContent(vm, onClose, onEdit, onPickImage, Modifier.padding(horizontal = 16.dp))
+        Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 10.dp)) {
+            SheetHeader(title, onClose)
+            Spacer(Modifier.size(14.dp))
+            PhaseContent(vm, onClose, onEdit, onPickImage, Modifier)
         }
     } else {
         Scaffold(topBar = {
@@ -185,71 +190,81 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
     }
 }
 
-/** A message picked from the screen: change anything, then Done saves it. */
+/** A message picked from the screen: change anything, then Save reminder saves it. */
 @Composable
 private fun ConfirmPhase(vm: QuickAddViewModel, onClose: () -> Unit) {
     val task = vm.pendingTask ?: return
     val context = LocalContext.current
-    OutlinedTextField(
-        task.title, { vm.updatePending(task.copy(title = it)) },
-        label = { Text("What") },
-        modifier = Modifier.fillMaxWidth(),
-    )
+    TaskHeadline(task.title, { vm.updatePending(task.copy(title = it)) })
     task.notes?.let {
-        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 4, overflow = TextOverflow.Ellipsis)
+        Text(
+            it,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
-    OutlinedTextField(
-        task.requester ?: "", { vm.updatePending(task.copy(requester = it.ifBlank { null })) },
-        label = { Text("Who asked") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+    FromRow(task.requester, task.source) { vm.updatePending(task.copy(requester = it.ifBlank { null })) }
+    ReminderCard(
+        dueAt = task.dueAt,
+        onDue = { vm.updatePending(task.copy(dueAt = it)) },
+        nagMinutes = task.nagMinutes,
+        onNag = { vm.updatePending(task.copy(nagMinutes = it)) },
+        highPriority = task.highPriority,
+        onHighPriority = { vm.updatePending(task.copy(highPriority = it)) },
     )
-    DueEditor(task.dueAt) { vm.updatePending(task.copy(dueAt = it)) }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("High priority", Modifier.weight(1f))
-        Switch(task.highPriority, { vm.updatePending(task.copy(highPriority = it)) })
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedButton(onClick = vm::backToScreen, modifier = Modifier.weight(1f)) { Text("Back") }
-        Button(
-            onClick = {
-                vm.confirmPending {
-                    Toast.makeText(context, "Saved to ForgetMeNot", Toast.LENGTH_SHORT).show()
-                    onClose()
-                }
-            },
-            enabled = task.title.isNotBlank(),
-            modifier = Modifier.weight(1f),
-        ) { Text("Done") }
-    }
+    SheetActions(
+        secondary = "Back",
+        onSecondary = vm::backToScreen,
+        primary = "Save reminder",
+        onPrimary = {
+            vm.confirmPending {
+                Toast.makeText(context, "Saved to ForgetMeNot", Toast.LENGTH_SHORT).show()
+                onClose()
+            }
+        },
+        enabled = task.title.isNotBlank(),
+    )
 }
 
 /** Shown after a one-tap save: change the due time or priority, edit, or undo. */
 @Composable
 private fun SavedPhase(vm: QuickAddViewModel, onClose: () -> Unit, onEdit: (Long) -> Unit) {
     val task = vm.savedTask ?: return
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(task.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-            task.notes?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 4, overflow = TextOverflow.Ellipsis)
-            }
-            task.requester?.let {
-                Text("From $it", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
+    TaskHeadline(task.title, null)
+    task.notes?.let {
+        Text(
+            it,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
-    DueEditor(task.dueAt) { vm.updateSaved(task.copy(dueAt = it)) }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("High priority", Modifier.weight(1f))
-        Switch(task.highPriority, { vm.updateSaved(task.copy(highPriority = it)) })
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onClick = { vm.undoSaved(onClose) }) { Text("Undo") }
-        Spacer(Modifier.weight(1f))
-        OutlinedButton(onClick = { onEdit(task.id) }) { Text("Edit") }
-        Button(onClick = onClose) { Text("Done") }
-    }
+    if (task.requester != null) FromRow(task.requester, task.source, null)
+    ReminderCard(
+        dueAt = task.dueAt,
+        onDue = { vm.updateSaved(task.copy(dueAt = it)) },
+        nagMinutes = task.nagMinutes,
+        onNag = { vm.updateSaved(task.copy(nagMinutes = it)) },
+        highPriority = task.highPriority,
+        onHighPriority = { vm.updateSaved(task.copy(highPriority = it)) },
+    )
+    SheetActions(
+        secondary = "Undo",
+        onSecondary = { vm.undoSaved(onClose) },
+        primary = "Done",
+        onPrimary = onClose,
+        extra = {
+            Text(
+                "Edit",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { onEdit(task.id) }.padding(horizontal = 6.dp, vertical = 12.dp),
+            )
+        },
+    )
 }
 
 @Composable
