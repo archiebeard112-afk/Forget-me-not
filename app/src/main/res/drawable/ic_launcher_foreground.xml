@@ -1,12 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- Five petals around a yellow centre -->
-    <path android:fillColor="#4A7BE0" android:pathData="M54,30m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
-    <path android:fillColor="#4A7BE0" android:pathData="M76.8,46.6m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
-    <path android:fillColor="#4A7BE0" android:pathData="M68.1,73.4m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
-    <path android:fillColor="#4A7BE0" android:pathData="M39.9,73.4m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
-    <path android:fillColor="#4A7BE0" android:pathData="M31.2,46.6m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
-    <path android:fillColor="#FFFFFF" android:pathData="M54,54m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
-    <path android:fillColor="#F5C542" android:pathData="M54,54m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+    <!-- Bloom Check: four petals, a check for the fifth, gold centre -->
+    <group android:rotation="72" android:pivotX="54" android:pivotY="54">
+        <path android:pathData="M54,52 C47.5,45 46.5,33.5 54,27.5 C61.5,33.5 60.5,45 54,52 Z">
+        <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="47" android:startY="27.5" android:endX="61" android:endY="52">
+                    <item android:offset="0" android:color="#FFA9C3FF" />
+                    <item android:offset="1" android:color="#FF4F7FF2" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+    <group android:rotation="144" android:pivotX="54" android:pivotY="54">
+        <path android:pathData="M54,52 C47.5,45 46.5,33.5 54,27.5 C61.5,33.5 60.5,45 54,52 Z">
+        <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="47" android:startY="27.5" android:endX="61" android:endY="52">
+                    <item android:offset="0" android:color="#FFA9C3FF" />
+                    <item android:offset="1" android:color="#FF4F7FF2" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+    <group android:rotation="216" android:pivotX="54" android:pivotY="54">
+        <path android:pathData="M54,52 C47.5,45 46.5,33.5 54,27.5 C61.5,33.5 60.5,45 54,52 Z">
+        <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="47" android:startY="27.5" android:endX="61" android:endY="52">
+                    <item android:offset="0" android:color="#FFA9C3FF" />
+                    <item android:offset="1" android:color="#FF4F7FF2" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+    <group android:rotation="288" android:pivotX="54" android:pivotY="54">
+        <path android:pathData="M54,52 C47.5,45 46.5,33.5 54,27.5 C61.5,33.5 60.5,45 54,52 Z">
+        <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="47" android:startY="27.5" android:endX="61" android:endY="52">
+                    <item android:offset="0" android:color="#FFA9C3FF" />
+                    <item android:offset="1" android:color="#FF4F7FF2" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+    <!-- The fifth petal is a check mark, centred where that petal would be -->
+    <path android:pathData="M45.25,39.75 L51.25,45.75 L62.75,33.75" android:strokeColor="#FFF2C14E" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round" />
+    <path android:fillColor="#FFF2C14E" android:pathData="M48.5,54 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0" />
 </vector>
