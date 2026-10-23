@@ -47,7 +47,9 @@ sealed interface Phase {
     data object Pick : Phase
     /** Tap the message right on the screen, inside a glowing halo (power button, no AI). */
     data object Halo : Phase
-    /** Already saved; adjust or undo. */
+    /** A message picked from the screen, not saved yet: adjust, then Done saves it. */
+    data object Confirm : Phase
+    /** Already saved (one-tap share); adjust or undo. */
     data object Saved : Phase
 }
 
@@ -75,6 +77,10 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
     val skipped = mutableStateListOf<String>()
     var savedTask by mutableStateOf<Task?>(null)
         private set
+    /** The task being confirmed in [Phase.Confirm]; not in the database yet. */
+    var pendingTask by mutableStateOf<Task?>(null)
+        private set
+    private var pickedFrom: Phase = Phase.Pick
     var source = "Quick add"
 
     val hasApiKey get() = app.prefs.apiKey.isNotBlank()
@@ -137,22 +143,37 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         selectedLines.clear()
     }
 
-    /** Tapping a message saves it: outline it for a moment, then move on to the saved options. */
-    fun pickAndSave(index: Int) {
-        if (selectedLines.isNotEmpty()) return // already saving
+    /** Tapping a message: outline it for a moment, then open the pop-up to confirm it. */
+    fun pick(index: Int) {
+        if (selectedLines.isNotEmpty()) return // already opening
         selectedLines.add(index)
+        pickedFrom = phase
         viewModelScope.launch {
             delay(250)
-            savePicked()
+            pendingTask = draftTask(screenLines[index], ScreenLines.guessSender(screenLines, index))
+            phase = Phase.Confirm
         }
     }
 
-    /** Save the lines picked from the screen. */
-    private fun savePicked() {
-        if (selectedLines.isEmpty()) return
-        val sorted = selectedLines.sorted()
-        val text = sorted.joinToString("\n") { screenLines[it] }
-        saveNow(text, ScreenLines.guessSender(screenLines, sorted.first()))
+    fun updatePending(task: Task) {
+        pendingTask = task
+    }
+
+    /** Done: save the confirmed task. */
+    fun confirmPending(onDone: () -> Unit) {
+        val task = pendingTask ?: return
+        if (task.title.isBlank()) return
+        viewModelScope.launch {
+            app.repository.save(task.copy(title = task.title.trim()))
+            onDone()
+        }
+    }
+
+    /** Back to the halo or list to pick a different message. */
+    fun backToScreen() {
+        pendingTask = null
+        selectedLines.clear()
+        phase = pickedFrom
     }
 
     /** One-tap save for shared or selected text. */
@@ -161,10 +182,10 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         saveNow(text, null)
     }
 
-    private fun saveNow(text: String, requester: String?) {
+    private fun draftTask(text: String, requester: String?): Task {
         val trimmed = text.trim()
         val firstLine = trimmed.lineSequence().first().take(120)
-        val task = Task(
+        return Task(
             title = firstLine,
             notes = trimmed.takeIf { it != firstLine },
             requester = requester,
@@ -172,6 +193,10 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
             nagMinutes = app.prefs.defaultNagMinutes,
             source = source,
         )
+    }
+
+    private fun saveNow(text: String, requester: String?) {
+        val task = draftTask(text, requester)
         viewModelScope.launch {
             val id = app.repository.save(task)
             savedTask = task.copy(id = id)

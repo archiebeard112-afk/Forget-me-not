@@ -100,7 +100,7 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                 val slop = 10.dp.toPx()
                 detectTapGestures { pos ->
                     val hit = ScreenLines.itemAt(vm.screenItems, pos.x + origin.x, pos.y + origin.y, slop)
-                    if (hit != null) vm.pickAndSave(hit) else if (vm.selectedLines.isEmpty()) onClose()
+                    if (hit != null) vm.pick(hit) else if (vm.selectedLines.isEmpty()) onClose()
                 }
             }
             .drawBehind {

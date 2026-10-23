@@ -1,5 +1,6 @@
 package com.forgetmenot.app.quickadd
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
@@ -76,6 +78,7 @@ fun QuickAddScreen(
     val title = when (vm.phase) {
         Phase.Review -> "Check & save"
         Phase.Pick -> "Tap what to save"
+        Phase.Confirm -> "Save this?"
         Phase.Saved -> "Saved ✓"
         else -> "Quick add"
     }
@@ -131,6 +134,7 @@ private fun PhaseContent(
                 }
             }
             Phase.Review -> ReviewPhase(vm, onClose)
+            Phase.Confirm -> ConfirmPhase(vm, onClose)
             Phase.Saved -> SavedPhase(vm, onClose, onEdit)
             Phase.Pick, Phase.Halo -> Unit
         }
@@ -148,7 +152,7 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
     }
     Column(modifier) {
         Text(
-            "Tap the message you want to remember. It's saved straight away; you can change or undo it next.",
+            "Tap the message you want to remember.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -160,7 +164,7 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
             itemsIndexed(vm.screenLines) { i, line ->
                 val selected = i in vm.selectedLines
                 Surface(
-                    onClick = { vm.pickAndSave(i) },
+                    onClick = { vm.pick(i) },
                     shape = RoundedCornerShape(12.dp),
                     color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                     border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
@@ -178,6 +182,45 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
         } else {
             Spacer(Modifier.size(12.dp))
         }
+    }
+}
+
+/** A message picked from the screen: change anything, then Done saves it. */
+@Composable
+private fun ConfirmPhase(vm: QuickAddViewModel, onClose: () -> Unit) {
+    val task = vm.pendingTask ?: return
+    val context = LocalContext.current
+    OutlinedTextField(
+        task.title, { vm.updatePending(task.copy(title = it)) },
+        label = { Text("What") },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    task.notes?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 4, overflow = TextOverflow.Ellipsis)
+    }
+    OutlinedTextField(
+        task.requester ?: "", { vm.updatePending(task.copy(requester = it.ifBlank { null })) },
+        label = { Text("Who asked") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    DueEditor(task.dueAt) { vm.updatePending(task.copy(dueAt = it)) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("High priority", Modifier.weight(1f))
+        Switch(task.highPriority, { vm.updatePending(task.copy(highPriority = it)) })
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedButton(onClick = vm::backToScreen, modifier = Modifier.weight(1f)) { Text("Back") }
+        Button(
+            onClick = {
+                vm.confirmPending {
+                    Toast.makeText(context, "Saved to Forget-me-not", Toast.LENGTH_SHORT).show()
+                    onClose()
+                }
+            },
+            enabled = task.title.isNotBlank(),
+            modifier = Modifier.weight(1f),
+        ) { Text("Done") }
     }
 }
 
