@@ -4,12 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.forgetmenot.app.app
+import com.forgetmenot.app.data.DueDefaults
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
 
 /** Fires reminders and handles the Done / +1 hour / Tomorrow notification buttons. */
 class ReminderReceiver : BroadcastReceiver() {
@@ -41,10 +39,7 @@ class ReminderReceiver : BroadcastReceiver() {
                         Notifications.cancel(context, taskId)
                     }
                     ACTION_TOMORROW -> {
-                        val zone = ZoneId.systemDefault()
-                        val at = LocalDate.now(zone).plusDays(1).atTime(LocalTime.of(9, 0))
-                            .atZone(zone).toInstant().toEpochMilli()
-                        repo.snooze(taskId, at)
+                        repo.snooze(taskId, DueDefaults.tomorrowMorning())
                         Notifications.cancel(context, taskId)
                     }
                 }

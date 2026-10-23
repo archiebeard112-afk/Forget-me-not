@@ -50,7 +50,7 @@
             android:label="@string/quick_add_label"
             android:taskAffinity="com.forgetmenot.app.popup"
             android:theme="@style/Theme.ForgetMeNot.Popup"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

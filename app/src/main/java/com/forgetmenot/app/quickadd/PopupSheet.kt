@@ -4,6 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -24,6 +30,7 @@ fun PopupSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     Box(
         Modifier.fillMaxSize()
             .background(Color.Black.copy(alpha = 0.4f))
+            .windowInsetsPadding(WindowInsets.statusBars)
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
     ) {
         Surface(
@@ -31,7 +38,9 @@ fun PopupSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) {
             modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = maxHeight)
                 .clickable(remember { MutableInteractionSource() }, indication = null) {},
         ) {
-            content()
+            Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))) {
+                content()
+            }
         }
     }
 }

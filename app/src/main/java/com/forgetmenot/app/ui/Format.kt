@@ -10,7 +10,7 @@ private val time = DateTimeFormatter.ofPattern("h:mm a")
 private val dayTime = DateTimeFormatter.ofPattern("EEE h:mm a")
 private val dateTime = DateTimeFormatter.ofPattern("MMM d, h:mm a")
 
-/** "Overdue 2h", "Today 3:00 PM", "Tomorrow 9:00 AM", "Fri 9:00 AM", "Nov 3, 9:00 AM". */
+/** "Overdue 2h", "Today 3:00 PM", "Tomorrow 6:00 AM", "Fri 9:00 AM", "Nov 3, 9:00 AM". */
 fun formatDue(dueAt: Long, now: Long = System.currentTimeMillis()): String {
     val zone = ZoneId.systemDefault()
     val due = Instant.ofEpochMilli(dueAt).atZone(zone)

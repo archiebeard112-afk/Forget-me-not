@@ -71,7 +71,7 @@ class Prefs(context: Context) {
         val INSTANT_DUE_OPTIONS = listOf(
             DUE_IN_1H to "In 1 hour",
             DUE_5PM to "5pm today",
-            DUE_TOMORROW to "Tomorrow 9am",
+            DUE_TOMORROW to "Tomorrow 6am",
             DUE_NONE to "No due time",
         )
 
