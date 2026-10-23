@@ -6,31 +6,28 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,19 +36,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.forgetmenot.app.assist.AssistService
 import com.forgetmenot.app.data.Prefs
 import com.forgetmenot.app.reminders.Notifications
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
+import java.time.format.TextStyle as DayStyle
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("BatteryLife")
 @Composable
 fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
@@ -70,187 +72,206 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
     var powerMode by remember { mutableStateOf(prefs.powerButtonMode) }
     val power = context.getSystemService(PowerManager::class.java)
     var unrestricted by remember { mutableStateOf(power.isIgnoringBatteryOptimizations(context.packageName)) }
+    val assistantActive = remember { AssistService.isActive(context) }
 
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text("Settings") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-        )
-    }) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            Row(
+                Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RoundIconButton(LineIcons.Back, "Back", onBack)
+                Text("Settings", fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 14.dp))
+            }
+        },
+    ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp).windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Hold the power button", style = MaterialTheme.typography.titleMedium)
-            val active = remember { AssistService.isActive(context) }
-            Text(
-                if (active) {
-                    "✅ ForgetMeNot is your digital assistant. Hold the power button on any screen, such as a Teams chat."
-                } else {
-                    "Make ForgetMeNot your digital assistant app, and holding the power button opens a pop-up with " +
-                        "the text on screen. This replaces Google Assistant / Gemini on that button; you can switch back any time."
-                },
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Choice("Halo: tap the message right on the screen (no AI)", powerMode == Prefs.POWER_HALO) {
-                powerMode = Prefs.POWER_HALO; prefs.powerButtonMode = Prefs.POWER_HALO
+            SectionLabel("Power button")
+            SettingsGroup {
+                SelectRow(LineIcons.Halo, "Halo", "Tap the message right on the screen", powerMode == Prefs.POWER_HALO) {
+                    powerMode = Prefs.POWER_HALO; prefs.powerButtonMode = Prefs.POWER_HALO
+                }
+                GroupDivider()
+                SelectRow(LineIcons.List, "List", "Pick from the text on screen", powerMode == Prefs.POWER_PICK) {
+                    powerMode = Prefs.POWER_PICK; prefs.powerButtonMode = Prefs.POWER_PICK
+                }
+                GroupDivider()
+                SelectRow(LineIcons.Sparkle, "Claude", "Claude reads the screen and drafts it (needs API key)", powerMode == Prefs.POWER_CLAUDE) {
+                    powerMode = Prefs.POWER_CLAUDE; prefs.powerButtonMode = Prefs.POWER_CLAUDE
+                }
+                GroupDivider()
+                SettingRow(
+                    LineIcons.Power,
+                    if (assistantActive) "ForgetMeNot is your assistant" else "Set up the power button",
+                    if (assistantActive) "Tap to change" else "Choose ForgetMeNot as digital assistant",
+                    onClick = {
+                        runCatching { context.startActivity(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)) }
+                            .onFailure { context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
+                    },
+                ) { Chevron() }
             }
-            Choice("List of the text on screen (no AI)", powerMode == Prefs.POWER_PICK) {
-                powerMode = Prefs.POWER_PICK; prefs.powerButtonMode = Prefs.POWER_PICK
-            }
-            Choice("Claude reads the screen and drafts the task (needs API key)", powerMode == Prefs.POWER_CLAUDE) {
-                powerMode = Prefs.POWER_CLAUDE; prefs.powerButtonMode = Prefs.POWER_CLAUDE
-            }
-            OutlinedButton(onClick = {
-                runCatching { context.startActivity(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)) }
-                    .onFailure { context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
-            }) { Text(if (active) "Change digital assistant" else "Choose digital assistant") }
-            Text(
-                "In that screen, also turn on \"Analyze text on screen\" (names vary by phone). " +
-                    "On Samsung, also set Settings → Advanced features → Side button → Press and hold → Digital assistant.",
-                style = MaterialTheme.typography.bodySmall,
+            Footnote(
+                "Also turn on \"Analyze text on screen\" in that screen. On Samsung: Settings → Advanced features → " +
+                    "Side button → Press and hold → Digital assistant."
             )
 
-            HorizontalDivider()
-            Text("Saving shared or selected text", style = MaterialTheme.typography.titleMedium)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Save in one tap")
-                    Text(
-                        "Picking \"Add to ForgetMeNot\" saves straight away, then lets you adjust or undo.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+            SectionLabel("Lock screen")
+            SettingsGroup {
+                SwitchRow(
+                    LineIcons.Lock, "Add from the lock screen",
+                    "The + Task tile opens a pop-up without unlocking. Save needs your fingerprint.",
+                    lockScreen,
+                ) { lockScreen = it; prefs.lockScreenAdd = it }
+                GroupDivider()
+                SwitchRow(LineIcons.Pin, "Pinned \"+ Add task\" notification", "Always one tap away", pinned) {
+                    pinned = it; prefs.pinnedQuickAdd = it
+                    if (it) Notifications.showQuickAdd(context) else Notifications.hideQuickAdd(context)
                 }
-                Switch(instant, { instant = it; prefs.instantSave = it })
             }
-            Text("One-tap saves are due", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Prefs.INSTANT_DUE_OPTIONS.forEach { (id, label) ->
-                    FilterChip(selected = instantDue == id, onClick = { instantDue = id; prefs.instantDue = id }, label = { Text(label) })
+            Footnote("To add the tile: swipe down from the top right, tap the pencil, and drag + Task into your tiles.")
+
+            SectionLabel("Shared and selected text")
+            SettingsGroup {
+                SwitchRow(LineIcons.Text, "Save in one tap", "\"Add to ForgetMeNot\" saves straight away, with undo", instant) {
+                    instant = it; prefs.instantSave = it
                 }
+                GroupDivider()
+                SettingRow(LineIcons.Clock, "One-tap saves are due")
+                PillChoices(Prefs.INSTANT_DUE_OPTIONS, instantDue) { instantDue = it; prefs.instantDue = it }
             }
 
-            HorizontalDivider()
-            Text("Nagging", style = MaterialTheme.typography.titleMedium)
-            Text("Default time between nags", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NAG_OPTIONS.forEach { m ->
-                    FilterChip(selected = nag == m, onClick = { nag = m; prefs.defaultNagMinutes = m }, label = { Text(formatNag(m)) })
-                }
-            }
-            Text("Nag on these days", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                DayOfWeek.entries.forEach { day ->
-                    val on = day in nagDays
-                    FilterChip(
-                        selected = on,
-                        onClick = {
+            SectionLabel("Nagging")
+            SettingsGroup {
+                SettingRow(LineIcons.Bell, "Remind me every", "Default for new reminders")
+                PillChoices(NAG_OPTIONS.map { it to formatNag(it) }, nag) { nag = it; prefs.defaultNagMinutes = it }
+                GroupDivider()
+                SettingRow(LineIcons.Calendar, "Nag on these days", "Other days stay quiet all day")
+                Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    DayOfWeek.entries.forEach { day ->
+                        val on = day in nagDays
+                        DayDot(day.getDisplayName(DayStyle.NARROW, Locale.getDefault()), on) {
                             val next = if (on) nagDays - day else nagDays + day
                             // At least one day, or reminders would never fire.
                             if (next.isNotEmpty()) { nagDays = next; prefs.nagDays = next }
-                        },
-                        label = { Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault())) },
-                    )
+                        }
+                    }
                 }
-            }
-            Text(
-                "Other days are quiet all day; nags wait for the next nag day.",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Quiet hours")
-                    Text("No nags ${clock(quietStart)} – ${clock(quietEnd)}", style = MaterialTheme.typography.bodySmall)
+                GroupDivider()
+                SwitchRow(LineIcons.Moon, "Quiet hours", "No nags ${clock(quietStart)} – ${clock(quietEnd)}", quiet) {
+                    quiet = it; prefs.quietHoursEnabled = it
                 }
-                Switch(quiet, { quiet = it; prefs.quietHoursEnabled = it })
-            }
-            if (quiet) {
-                TimeRow("Stop at", quietStart) { quietStart = it; prefs.quietStartMinute = it }
-                TimeRow("Resume at", quietEnd) { quietEnd = it; prefs.quietEndMinute = it }
+                if (quiet) {
+                    GroupDivider()
+                    TimeRow("Stop at", quietStart) { quietStart = it; prefs.quietStartMinute = it }
+                    GroupDivider()
+                    TimeRow("Resume at", quietEnd) { quietEnd = it; prefs.quietEndMinute = it }
+                }
             }
 
-            HorizontalDivider()
-            Text("Reading messages & screenshots", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Optional. Paste an Anthropic API key (console.anthropic.com) to let Claude turn messages and " +
-                    "screenshots into tidy tasks. Everything else works without it.",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            OutlinedTextField(
-                apiKey, { apiKey = it; prefs.apiKey = it },
-                label = { Text("API key") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Prefs.MODELS.forEach { (id, label) ->
-                Choice(label, model == id) { model = id; prefs.model = id }
-            }
-
-            HorizontalDivider()
-            Text("Quick capture", style = MaterialTheme.typography.titleMedium)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Pinned \"+ Add task\" notification")
-                    Text("Always one tap away, including from the lock screen", style = MaterialTheme.typography.bodySmall)
+            SectionLabel("Claude (optional)")
+            SettingsGroup {
+                SettingRow(LineIcons.Key, "API key", if (apiKey.isBlank()) "Paste a key from console.anthropic.com" else "Saved on this phone")
+                ApiKeyField(apiKey) { apiKey = it; prefs.apiKey = it }
+                Prefs.MODELS.forEach { (id, label) ->
+                    GroupDivider()
+                    SelectRow(null, label.substringBefore(" ("), label.substringAfter("(", "").removeSuffix(")").ifEmpty { null }, model == id) {
+                        model = id; prefs.model = id
+                    }
                 }
-                Switch(pinned, {
-                    pinned = it; prefs.pinnedQuickAdd = it
-                    if (it) Notifications.showQuickAdd(context) else Notifications.hideQuickAdd(context)
-                })
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Add tasks from the lock screen")
-                    Text(
-                        "The tile and pinned notification open a pop-up without unlocking. It can only add tasks, " +
-                            "and Save needs your fingerprint, face or PIN. Off: unlock first.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Switch(lockScreen, { lockScreen = it; prefs.lockScreenAdd = it })
-            }
-            Text(
-                "Quick Settings tile: swipe down twice, tap the pencil icon, and drag \"+ Task\" into your tiles.",
-                style = MaterialTheme.typography.bodySmall,
-            )
+            Footnote("Only needed for Claude reading screenshots and messages. Everything else works without it.")
 
-            HorizontalDivider()
-            Text("Reliable reminders", style = MaterialTheme.typography.titleMedium)
-            Text(
-                if (unrestricted) "✅ Battery optimization is off for ForgetMeNot."
-                else "Samsung and other phones may silently kill reminders. Turn off battery optimization for this app.",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            if (!unrestricted) {
-                OutlinedButton(onClick = {
-                    context.startActivity(
-                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${context.packageName}"))
-                    )
-                    unrestricted = true
-                }) { Text("Allow running in background") }
+            SectionLabel("Reliable reminders")
+            SettingsGroup {
+                SettingRow(
+                    LineIcons.Battery,
+                    if (unrestricted) "Running in background" else "Allow running in background",
+                    if (unrestricted) "Battery optimization is off" else "Samsung may otherwise silently stop reminders",
+                    onClick = if (unrestricted) null else {
+                        {
+                            context.startActivity(
+                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${context.packageName}"))
+                            )
+                            unrestricted = true
+                        }
+                    },
+                ) {
+                    if (unrestricted) Icon(LineIcons.Check, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary) else Chevron()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Choice(label: String, selected: Boolean, onSelect: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        RadioButton(selected = selected, onClick = onSelect)
-        Text(label)
+private fun Footnote(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 6.dp),
+    )
+}
+
+@Composable
+private fun Chevron() {
+    Icon(LineIcons.Chevron, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+private fun DayDot(label: String, on: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.size(38.dp).clip(CircleShape)
+            .background(if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLowest)
+            .clickable(role = Role.Checkbox, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (on) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
 @Composable
 private fun TimeRow(label: String, minuteOfDay: Int, onChange: (Int) -> Unit) {
     val context = LocalContext.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f))
-        OutlinedButton(onClick = {
+    SettingRow(null, label) {
+        Pill(clock(minuteOfDay), selected = true) {
             TimePickerDialog(context, { _, h, m -> onChange(h * 60 + m) }, minuteOfDay / 60, minuteOfDay % 60, false).show()
-        }) { Text(clock(minuteOfDay)) }
+        }
     }
+}
+
+@Composable
+private fun ApiKeyField(value: String, onChange: (String) -> Unit) {
+    val style = TextStyle(fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+    BasicTextField(
+        value = value,
+        onValueChange = onChange,
+        singleLine = true,
+        textStyle = style,
+        visualTransformation = PasswordVisualTransformation(),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        decorationBox = { inner ->
+            Box(
+                Modifier.fillMaxWidth().clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                if (value.isEmpty()) Text("sk-ant-…", style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+                inner()
+            }
+        },
+    )
 }
 
 private val clockFormat = DateTimeFormatter.ofPattern("h:mm a")

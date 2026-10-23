@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -45,7 +48,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -59,15 +61,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.forgetmenot.app.ui.DueEditor
 import com.forgetmenot.app.ui.FromRow
 import com.forgetmenot.app.ui.ReminderCard
+import com.forgetmenot.app.ui.RoundIconButton
 import com.forgetmenot.app.ui.SheetActions
 import com.forgetmenot.app.ui.SheetHeader
 import com.forgetmenot.app.ui.TaskHeadline
 import com.forgetmenot.app.ui.Warning
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickAddScreen(
     vm: QuickAddViewModel,
@@ -96,12 +99,19 @@ fun QuickAddScreen(
             PhaseContent(vm, onClose, onEdit, onPickImage, Modifier)
         }
     } else {
-        Scaffold(topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") } },
-            )
-        }) { padding ->
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                Row(
+                    Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RoundIconButton(Icons.Default.Close, "Close", onClose)
+                    Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 14.dp))
+                }
+            },
+        ) { padding ->
             PhaseContent(
                 vm, onClose, onEdit, onPickImage,
                 Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal = 16.dp),

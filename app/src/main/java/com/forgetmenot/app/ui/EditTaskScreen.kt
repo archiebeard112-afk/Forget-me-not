@@ -1,29 +1,23 @@
 package com.forgetmenot.app.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,14 +25,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.forgetmenot.app.data.Task
 
 val NAG_OPTIONS = listOf(15, 30, 60, 120, 240)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditTaskScreen(
     task: Task,
@@ -65,50 +61,98 @@ fun EditTaskScreen(
         nagMinutes = nag,
     )
 
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text(if (task.id == 0L) "New task" else "Edit task") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-            actions = {
-                if (task.id != 0L) IconButton(onClick = { onDelete(task) }) { Icon(Icons.Default.Delete, "Delete") }
-            },
-        )
-    }) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            Row(
+                Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RoundIconButton(LineIcons.Back, "Back", onBack)
+                Text(
+                    if (task.done) "Done reminder" else "Edit reminder",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f).padding(start = 14.dp),
+                )
+                if (task.id != 0L) RoundIconButton(LineIcons.Trash, "Delete", { onDelete(task) }, tint = Urgent)
+            }
+        },
+    ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp).windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            OutlinedTextField(title, { title = it }, label = { Text("What") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(
-                details, { details = it }, label = { Text("Details (codes, amounts)") },
-                textStyle = TextStyle(fontFamily = FontFamily.Monospace),
-                modifier = Modifier.fillMaxWidth(),
+            TaskHeadline(title, { title = it }, modifier = Modifier.padding(top = 8.dp))
+            FromRow(requester.ifEmpty { null }, task.source) { requester = it }
+            TextCard(LineIcons.Tag, "Details") {
+                CardTextField(details, { details = it }, "Customer, amounts, product codes", monospace = true)
+            }
+            ReminderCard(
+                dueAt = dueAt,
+                onDue = { dueAt = it },
+                nagMinutes = nag,
+                onNag = { nag = it },
+                highPriority = high,
+                onHighPriority = { high = it },
             )
-            OutlinedTextField(requester, { requester = it }, label = { Text("Who asked") }, modifier = Modifier.fillMaxWidth())
-            DueEditor(dueAt) { dueAt = it }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("High priority", Modifier.weight(1f))
-                Switch(high, { high = it })
+            if (dueAt != null) {
+                Text(
+                    "Turn off reminders for this task",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.End).clickable { dueAt = null }.padding(4.dp),
+                )
             }
-            Text("Nag every", style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NAG_OPTIONS.forEach { m ->
-                    FilterChip(selected = nag == m, onClick = { nag = m }, label = { Text(formatNag(m)) })
-                }
+            TextCard(LineIcons.Notes, "Notes") {
+                CardTextField(notes, { notes = it }, "Anything else to remember", minLines = 3)
             }
-            OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, minLines = 3, modifier = Modifier.fillMaxWidth())
             task.source?.let {
-                Text("Added from $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "Added from $it",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = { onSave(edited()) }, modifier = Modifier.weight(1f)) { Text("Save") }
-                if (task.id != 0L) {
-                    OutlinedButton(onClick = { onToggleDone(task) }, modifier = Modifier.weight(1f)) {
-                        Text(if (task.done) "Reopen" else "Mark done")
-                    }
-                }
-            }
-            Spacer(Modifier.padding(8.dp))
+            SheetActions(
+                secondary = if (task.done) "Reopen" else "Mark done",
+                onSecondary = { onToggleDone(task) },
+                primary = "Save changes",
+                onPrimary = { onSave(edited()) },
+                enabled = title.isNotBlank(),
+            )
         }
     }
+}
+
+@Composable
+private fun CardTextField(
+    value: String,
+    onChange: (String) -> Unit,
+    placeholder: String,
+    monospace: Boolean = false,
+    minLines: Int = 1,
+) {
+    val style = TextStyle(
+        fontSize = 15.sp,
+        lineHeight = 21.sp,
+        fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    BasicTextField(
+        value = value,
+        onValueChange = onChange,
+        textStyle = style,
+        minLines = minLines,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = Modifier.fillMaxWidth(),
+        decorationBox = { inner ->
+            androidx.compose.foundation.layout.Box {
+                if (value.isEmpty()) Text(placeholder, style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+                inner()
+            }
+        },
+    )
 }
