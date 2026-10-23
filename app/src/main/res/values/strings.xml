@@ -2,5 +2,4 @@
     <string name="app_name">ForgetMeNot</string>
     <string name="quick_add_label">Add to ForgetMeNot</string>
     <string name="tile_label">+ Task</string>
-    <string name="quick_add_shortcut_label">Quick add</string>
 </resources>
