@@ -4,13 +4,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -34,8 +40,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,42 +61,153 @@ import com.forgetmenot.app.ui.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuickAddScreen(vm: QuickAddViewModel, onClose: () -> Unit, inSheet: Boolean = false) {
+fun QuickAddScreen(
+    vm: QuickAddViewModel,
+    onClose: () -> Unit,
+    onEdit: (Long) -> Unit,
+    inSheet: Boolean = false,
+) {
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let(vm::loadImage)
     }
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text(if (vm.phase == Phase.Review) "Check & save" else "Quick add") },
-            navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") } },
-            windowInsets = if (inSheet) WindowInsets(0) else TopAppBarDefaults.windowInsets,
+    val onPickImage = {
+        pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+    val title = when (vm.phase) {
+        Phase.Review -> "Check & save"
+        Phase.Pick -> "Tap what to save"
+        Phase.Saved -> "Saved ✓"
+        else -> "Quick add"
+    }
+    if (inSheet) {
+        Column(Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(start = 4.dp, end = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") }
+                Text(title, style = MaterialTheme.typography.titleLarge)
+            }
+            PhaseContent(vm, onClose, onEdit, onPickImage, Modifier.padding(horizontal = 16.dp))
+        }
+    } else {
+        Scaffold(topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") } },
+            )
+        }) { padding ->
+            PhaseContent(
+                vm, onClose, onEdit, onPickImage,
+                Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal = 16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PhaseContent(
+    vm: QuickAddViewModel,
+    onClose: () -> Unit,
+    onEdit: (Long) -> Unit,
+    onPickImage: () -> Unit,
+    modifier: Modifier,
+) {
+    if (vm.phase == Phase.Pick) {
+        PickPhase(vm, modifier)
+        return
+    }
+    Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        when (vm.phase) {
+            Phase.Input -> InputPhase(vm, onClose, onPickImage)
+            Phase.Reading -> Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.size(16.dp))
+                    Text(
+                        when {
+                            vm.screenText != null -> "Reading your screen…"
+                            vm.image != null -> "Reading screenshot…"
+                            else -> "Reading message…"
+                        }
+                    )
+                }
+            }
+            Phase.Review -> ReviewPhase(vm, onClose)
+            Phase.Saved -> SavedPhase(vm, onClose, onEdit)
+            Phase.Pick -> Unit
+        }
+        Spacer(Modifier.size(8.dp))
+    }
+}
+
+/** Power button without AI: the screen's text as tappable lines. */
+@Composable
+private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(Unit) {
+        // Chats put the newest message at the bottom.
+        if (vm.screenLines.isNotEmpty()) listState.scrollToItem(vm.screenLines.lastIndex)
+    }
+    Column(modifier) {
+        Text(
+            "Tap the message you want to remember. Tap more lines to add them to the same task.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }, contentWindowInsets = if (inSheet) WindowInsets.ime else ScaffoldDefaults.contentWindowInsets) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.weight(1f, fill = false).padding(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            when (vm.phase) {
-                Phase.Input -> InputPhase(vm, onClose) {
-                    pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            itemsIndexed(vm.screenLines) { i, line ->
+                val selected = i in vm.selectedLines
+                Surface(
+                    onClick = { vm.toggleLine(i) },
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(line, Modifier.padding(horizontal = 12.dp, vertical = 10.dp), maxLines = 6, overflow = TextOverflow.Ellipsis)
                 }
-                Phase.Reading -> Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.size(16.dp))
-                        Text(
-                            when {
-                                vm.screenText != null -> "Reading your screen…"
-                                vm.image != null -> "Reading screenshot…"
-                                else -> "Reading message…"
-                            }
-                        )
-                    }
-                }
-                Phase.Review -> ReviewPhase(vm, onClose)
             }
         }
+        vm.error?.let { WarningCard(it) }
+        Row(Modifier.padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (vm.hasApiKey) {
+                OutlinedButton(onClick = vm::read, modifier = Modifier.weight(1f)) { Text("✨ Let Claude read it") }
+            }
+            val n = vm.selectedLines.size
+            Button(onClick = vm::savePicked, enabled = n > 0, modifier = Modifier.weight(1f)) {
+                Text(if (n <= 1) "Save" else "Save $n lines")
+            }
+        }
+    }
+}
+
+/** Shown after a one-tap save: change the due time or priority, edit, or undo. */
+@Composable
+private fun SavedPhase(vm: QuickAddViewModel, onClose: () -> Unit, onEdit: (Long) -> Unit) {
+    val task = vm.savedTask ?: return
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(task.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            task.notes?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 4, overflow = TextOverflow.Ellipsis)
+            }
+            task.requester?.let {
+                Text("From $it", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+    DueEditor(task.dueAt) { vm.updateSaved(task.copy(dueAt = it)) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("High priority", Modifier.weight(1f))
+        Switch(task.highPriority, { vm.updateSaved(task.copy(highPriority = it)) })
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onClick = { vm.undoSaved(onClose) }) { Text("Undo") }
+        Spacer(Modifier.weight(1f))
+        OutlinedButton(onClick = { onEdit(task.id) }) { Text("Edit") }
+        Button(onClick = onClose) { Text("Done") }
     }
 }
 

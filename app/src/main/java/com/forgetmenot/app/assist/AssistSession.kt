@@ -11,7 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.service.voice.VoiceInteractionSession
 import androidx.annotation.RequiresApi
-import com.forgetmenot.app.quickadd.AssistPopupActivity
+import com.forgetmenot.app.quickadd.CapturePopupActivity
 
 /**
  * Runs when the power button is held. Collects the screen's text (and a screenshot when
@@ -71,7 +71,7 @@ class AssistSession(context: Context) : VoiceInteractionSession(context) {
         launched = true
         handler.removeCallbacksAndMessages(null)
         AssistInbox.put(AssistInbox.Capture(screenText, screenshot, appPackage), this)
-        val intent = Intent(context, AssistPopupActivity::class.java)
+        val intent = Intent(context, CapturePopupActivity::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             startAssistantActivity(intent)
         } else {

@@ -14,6 +14,9 @@ import androidx.lifecycle.viewModelScope
 import com.forgetmenot.app.ForgetMeNotApp
 import com.forgetmenot.app.ai.ExtractionException
 import com.forgetmenot.app.ai.TaskExtractor
+import com.forgetmenot.app.assist.ScreenLines
+import com.forgetmenot.app.data.DueDefaults
+import com.forgetmenot.app.data.Prefs
 import com.forgetmenot.app.data.Task
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,9 +35,16 @@ data class EditableDraft(
 )
 
 sealed interface Phase {
+    /** Type a task, or pick a screenshot. */
     data object Input : Phase
+    /** Waiting for Claude. */
     data object Reading : Phase
+    /** Check Claude's drafts. */
     data object Review : Phase
+    /** Tap the lines from the screen to save (power button, no AI). */
+    data object Pick : Phase
+    /** Already saved; adjust or undo. */
+    data object Saved : Phase
 }
 
 class QuickAddViewModel(application: Application) : AndroidViewModel(application) {
@@ -48,6 +58,8 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
     var screenText by mutableStateOf<String?>(null)
         private set
     private var screenApp: String? = null
+    val screenLines = mutableStateListOf<String>()
+    val selectedLines = mutableStateListOf<Int>()
     var clipboardSuggestion by mutableStateOf<String?>(null)
     var phase by mutableStateOf<Phase>(Phase.Input)
         private set
@@ -55,6 +67,8 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         private set
     val drafts = mutableStateListOf<EditableDraft>()
     val skipped = mutableStateListOf<String>()
+    var savedTask by mutableStateOf<Task?>(null)
+        private set
     var source = "Quick add"
 
     val hasApiKey get() = app.prefs.apiKey.isNotBlank()
@@ -73,26 +87,89 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         image = null
     }
 
-    /** Called by the power-button pop-up with what was on screen; starts reading right away. */
-    fun loadFromScreen(text: String?, screenshot: Bitmap?, appPackage: String?) {
-        screenText = text
-        image = screenshot?.let(::shrink)
-        screenApp = appName(appPackage)
-        source = screenApp?.let { "Screen ($it)" } ?: "Screen"
-        if (hasApiKey && (text != null || image != null)) read()
-    }
-
-    fun clearScreen() {
-        screenText = null
-        image = null
-    }
-
     fun useClipboard() {
         clipboardSuggestion?.let { input = it; source = "Copied message" }
         clipboardSuggestion = null
     }
 
-    /** Ask Claude to pull tasks out of the text and/or screenshot. */
+    /** Called by the power-button pop-up with what was on screen. */
+    fun loadFromScreen(text: String?, screenshot: Bitmap?, appPackage: String?) {
+        screenText = text
+        image = screenshot?.let(::shrink)
+        screenApp = appName(appPackage)
+        source = screenApp?.let { "Screen ($it)" } ?: "Screen"
+        if (app.prefs.powerButtonMode == Prefs.POWER_CLAUDE && hasApiKey && (text != null || image != null)) {
+            read()
+            return
+        }
+        screenLines.clear()
+        screenLines += ScreenLines.split(text)
+        if (screenLines.isEmpty()) {
+            error = "Couldn't read any text on that screen. Type the task instead."
+            phase = Phase.Input
+        } else {
+            phase = Phase.Pick
+        }
+    }
+
+    fun clearScreen() {
+        screenText = null
+        image = null
+        screenLines.clear()
+        selectedLines.clear()
+    }
+
+    fun toggleLine(index: Int) {
+        if (index in selectedLines) selectedLines.remove(index) else selectedLines.add(index)
+    }
+
+    /** Save the lines picked from the screen. */
+    fun savePicked() {
+        if (selectedLines.isEmpty()) return
+        val sorted = selectedLines.sorted()
+        val text = sorted.joinToString("\n") { screenLines[it] }
+        saveNow(text, ScreenLines.guessSender(screenLines, sorted.first()))
+    }
+
+    /** One-tap save for shared or selected text. */
+    fun saveShared(text: String) {
+        input = text
+        saveNow(text, null)
+    }
+
+    private fun saveNow(text: String, requester: String?) {
+        val trimmed = text.trim()
+        val firstLine = trimmed.lineSequence().first().take(120)
+        val task = Task(
+            title = firstLine,
+            notes = trimmed.takeIf { it != firstLine },
+            requester = requester,
+            dueAt = DueDefaults.instant(app.prefs),
+            nagMinutes = app.prefs.defaultNagMinutes,
+            source = source,
+        )
+        viewModelScope.launch {
+            val id = app.repository.save(task)
+            savedTask = task.copy(id = id)
+            phase = Phase.Saved
+        }
+    }
+
+    /** Change the just-saved task (due time, priority). */
+    fun updateSaved(task: Task) {
+        savedTask = task
+        viewModelScope.launch { app.repository.save(task) }
+    }
+
+    fun undoSaved(onDone: () -> Unit) {
+        val task = savedTask ?: return onDone()
+        viewModelScope.launch {
+            app.repository.delete(task.id)
+            onDone()
+        }
+    }
+
+    /** Ask Claude to pull tasks out of the text, screen and/or screenshot. */
     fun read() {
         val text = input.takeIf { it.isNotBlank() }
         val img = image
@@ -126,23 +203,25 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
                 skipped += result.skipped
                 if (drafts.isEmpty()) {
                     error = "Claude didn't find a request in this. You can type the task instead."
-                    phase = Phase.Input
+                    phase = inputPhase()
                 } else {
                     phase = Phase.Review
                 }
             } catch (e: ExtractionException) {
                 error = e.message
-                phase = Phase.Input
+                phase = inputPhase()
             } catch (e: Exception) {
                 error = "Couldn't reach Claude: ${e.message ?: e.javaClass.simpleName}"
-                phase = Phase.Input
+                phase = inputPhase()
             }
         }
     }
 
     fun backToInput() {
-        phase = Phase.Input
+        phase = inputPhase()
     }
+
+    private fun inputPhase(): Phase = if (screenLines.isNotEmpty()) Phase.Pick else Phase.Input
 
     /** Save what's typed without asking Claude. */
     fun saveTyped(onDone: () -> Unit) {

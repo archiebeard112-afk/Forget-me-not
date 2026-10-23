@@ -1,12 +1,15 @@
 package com.forgetmenot.app.ui
 
 import android.annotation.SuppressLint
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,8 +45,13 @@ import androidx.compose.ui.unit.dp
 import com.forgetmenot.app.assist.AssistService
 import com.forgetmenot.app.data.Prefs
 import com.forgetmenot.app.reminders.Notifications
+import java.time.DayOfWeek
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("BatteryLife")
 @Composable
 fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
@@ -52,9 +60,13 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
     var model by remember { mutableStateOf(prefs.model) }
     var nag by remember { mutableIntStateOf(prefs.defaultNagMinutes) }
     var quiet by remember { mutableStateOf(prefs.quietHoursEnabled) }
-    var quietStart by remember { mutableIntStateOf(prefs.quietStart) }
-    var quietEnd by remember { mutableIntStateOf(prefs.quietEnd) }
+    var quietStart by remember { mutableIntStateOf(prefs.quietStartMinute) }
+    var quietEnd by remember { mutableIntStateOf(prefs.quietEndMinute) }
+    var nagDays by remember { mutableStateOf(prefs.nagDays) }
     var pinned by remember { mutableStateOf(prefs.pinnedQuickAdd) }
+    var instant by remember { mutableStateOf(prefs.instantSave) }
+    var instantDue by remember { mutableStateOf(prefs.instantDue) }
+    var powerMode by remember { mutableStateOf(prefs.powerButtonMode) }
     val power = context.getSystemService(PowerManager::class.java)
     var unrestricted by remember { mutableStateOf(power.isIgnoringBatteryOptimizations(context.packageName)) }
 
@@ -68,10 +80,96 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
             Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Text("Hold the power button", style = MaterialTheme.typography.titleMedium)
+            val active = remember { AssistService.isActive(context) }
+            Text(
+                if (active) {
+                    "✅ Forget-me-not is your digital assistant. Hold the power button on any screen, such as a Teams chat."
+                } else {
+                    "Make Forget-me-not your digital assistant app, and holding the power button opens a pop-up with " +
+                        "the text on screen. This replaces Google Assistant / Gemini on that button; you can switch back any time."
+                },
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Choice("Tap the message to save it (no AI)", powerMode == Prefs.POWER_PICK) {
+                powerMode = Prefs.POWER_PICK; prefs.powerButtonMode = Prefs.POWER_PICK
+            }
+            Choice("Claude reads the screen and drafts the task (needs API key)", powerMode == Prefs.POWER_CLAUDE) {
+                powerMode = Prefs.POWER_CLAUDE; prefs.powerButtonMode = Prefs.POWER_CLAUDE
+            }
+            OutlinedButton(onClick = {
+                runCatching { context.startActivity(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)) }
+                    .onFailure { context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
+            }) { Text(if (active) "Change digital assistant" else "Choose digital assistant") }
+            Text(
+                "In that screen, also turn on \"Analyze text on screen\" (names vary by phone). " +
+                    "On Samsung, also set Settings → Advanced features → Side button → Press and hold → Digital assistant.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+
+            HorizontalDivider()
+            Text("Saving shared or selected text", style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Save in one tap")
+                    Text(
+                        "Picking \"Add to Forget-me-not\" saves straight away, then lets you adjust or undo.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Switch(instant, { instant = it; prefs.instantSave = it })
+            }
+            Text("One-tap saves are due", style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Prefs.INSTANT_DUE_OPTIONS.forEach { (id, label) ->
+                    FilterChip(selected = instantDue == id, onClick = { instantDue = id; prefs.instantDue = id }, label = { Text(label) })
+                }
+            }
+
+            HorizontalDivider()
+            Text("Nagging", style = MaterialTheme.typography.titleMedium)
+            Text("Default time between nags", style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NAG_OPTIONS.forEach { m ->
+                    FilterChip(selected = nag == m, onClick = { nag = m; prefs.defaultNagMinutes = m }, label = { Text(formatNag(m)) })
+                }
+            }
+            Text("Nag on these days", style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                DayOfWeek.entries.forEach { day ->
+                    val on = day in nagDays
+                    FilterChip(
+                        selected = on,
+                        onClick = {
+                            val next = if (on) nagDays - day else nagDays + day
+                            // At least one day, or reminders would never fire.
+                            if (next.isNotEmpty()) { nagDays = next; prefs.nagDays = next }
+                        },
+                        label = { Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault())) },
+                    )
+                }
+            }
+            Text(
+                "Other days are quiet all day; nags wait for the next nag day.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Quiet hours")
+                    Text("No nags ${clock(quietStart)} – ${clock(quietEnd)}", style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(quiet, { quiet = it; prefs.quietHoursEnabled = it })
+            }
+            if (quiet) {
+                TimeRow("Stop at", quietStart) { quietStart = it; prefs.quietStartMinute = it }
+                TimeRow("Resume at", quietEnd) { quietEnd = it; prefs.quietEndMinute = it }
+            }
+
+            HorizontalDivider()
             Text("Reading messages & screenshots", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Paste an Anthropic API key (console.anthropic.com) to let Claude turn messages and screenshots into tasks. " +
-                    "Without one, shared text is saved as-is and you fill in the rest.",
+                "Optional. Paste an Anthropic API key (console.anthropic.com) to let Claude turn messages and " +
+                    "screenshots into tidy tasks. Everything else works without it.",
                 style = MaterialTheme.typography.bodySmall,
             )
             OutlinedTextField(
@@ -82,30 +180,7 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
             )
             Prefs.MODELS.forEach { (id, label) ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = model == id, onClick = { model = id; prefs.model = id })
-                    Text(label)
-                }
-            }
-
-            HorizontalDivider()
-            Text("Nagging", style = MaterialTheme.typography.titleMedium)
-            Text("Default time between nags", style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NAG_OPTIONS.forEach { m ->
-                    FilterChip(selected = nag == m, onClick = { nag = m; prefs.defaultNagMinutes = m }, label = { Text(formatNag(m)) })
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Quiet hours")
-                    Text("No nags ${hour(quietStart)} – ${hour(quietEnd)}", style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(quiet, { quiet = it; prefs.quietHoursEnabled = it })
-            }
-            if (quiet) {
-                HourPicker("Stop at", quietStart) { quietStart = it; prefs.quietStart = it }
-                HourPicker("Resume at", quietEnd) { quietEnd = it; prefs.quietEnd = it }
+                Choice(label, model == id) { model = id; prefs.model = id }
             }
 
             HorizontalDivider()
@@ -122,30 +197,6 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
             }
             Text(
                 "Quick Settings tile: swipe down twice, tap the pencil icon, and drag \"+ Task\" into your tiles.",
-                style = MaterialTheme.typography.bodySmall,
-            )
-
-            HorizontalDivider()
-            Text("Hold the power button", style = MaterialTheme.typography.titleMedium)
-            val active = remember { AssistService.isActive(context) }
-            Text(
-                if (active) {
-                    "✅ Forget-me-not is your digital assistant. Hold the power button on any screen to turn it into a task."
-                } else {
-                    "Make Forget-me-not your digital assistant app, and holding the power button will read what's on " +
-                        "screen (like a Teams chat) and pop up a drafted task. This replaces Google Assistant / Gemini " +
-                        "on that button; you can switch back any time."
-                },
-                style = MaterialTheme.typography.bodySmall,
-            )
-            OutlinedButton(onClick = {
-                val intent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-                runCatching { context.startActivity(intent) }
-                    .onFailure { context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
-            }) { Text(if (active) "Change digital assistant" else "Choose digital assistant") }
-            Text(
-                "In that screen, also turn on \"Analyze text on screen\" and \"Use screenshot\" (names vary by phone). " +
-                    "On Samsung, also set Settings → Advanced features → Side button → Press and hold → Digital assistant.",
                 style = MaterialTheme.typography.bodySmall,
             )
 
@@ -169,18 +220,24 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
 }
 
 @Composable
-private fun HourPicker(label: String, value: Int, onChange: (Int) -> Unit) {
+private fun Choice(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f))
-        OutlinedButton(onClick = { onChange((value + 23) % 24) }) { Text("−") }
-        Text(hour(value), Modifier.padding(horizontal = 12.dp))
-        OutlinedButton(onClick = { onChange((value + 1) % 24) }) { Text("+") }
+        RadioButton(selected = selected, onClick = onSelect)
+        Text(label)
     }
 }
 
-private fun hour(h: Int): String = when {
-    h == 0 -> "12am"
-    h < 12 -> "${h}am"
-    h == 12 -> "12pm"
-    else -> "${h - 12}pm"
+@Composable
+private fun TimeRow(label: String, minuteOfDay: Int, onChange: (Int) -> Unit) {
+    val context = LocalContext.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f))
+        OutlinedButton(onClick = {
+            TimePickerDialog(context, { _, h, m -> onChange(h * 60 + m) }, minuteOfDay / 60, minuteOfDay % 60, false).show()
+        }) { Text(clock(minuteOfDay)) }
+    }
 }
+
+private val clockFormat = DateTimeFormatter.ofPattern("h:mm a")
+
+private fun clock(minuteOfDay: Int): String = LocalTime.of(minuteOfDay / 60, minuteOfDay % 60).format(clockFormat)

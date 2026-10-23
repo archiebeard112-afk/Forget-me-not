@@ -11,7 +11,8 @@ Requests arrive all day in Microsoft Teams. They're acknowledged (👍) and then
 ## Capture paths
 | Path | How |
 |---|---|
-| Hold power button | App is the default digital assistant (`VoiceInteractionService`). The assist session gets the screen's text (`AssistStructure`) and, if allowed, a screenshot, then opens a bottom-sheet pop-up that starts reading immediately. If the app on screen blocks capture (e.g. a managed work profile), the pop-up opens empty for typing. |
+| Hold power button | App is the default digital assistant (`VoiceInteractionService`). The assist session gets the screen's text (`AssistStructure`) and, if allowed, a screenshot, then opens a bottom-sheet pop-up. Default mode lists the screen's lines to tap and save (no AI; sender guessed from the line above). Optional mode sends the screen to Claude for a drafted task. If the app on screen blocks capture, the pop-up opens empty for typing. |
+| One-tap save | Shared and selected text (`ACTION_SEND`, `ACTION_PROCESS_TEXT`) is saved immediately with the default due time from Settings, then a pop-up offers due time, priority, edit and undo. Can be switched off to open quick add instead. |
 | Quick Settings tile "+ Task" | Opens quick add (asks to unlock first, so work data stays private). |
 | Pinned notification | Optional, always-visible "+ Add task". |
 | Copy → quick add | Teams on Android has no share for messages; quick add offers the copied text. |
@@ -33,7 +34,7 @@ Expected: one task for request (2), details with the code copied exactly, reques
 ## Reminders
 - Exact alarm at the due time (or immediately for ASAP), then every `nagMinutes` until done.
 - Notification actions: Done, +1 hour, Tomorrow (9am). Tapping opens the task to edit.
-- Quiet hours push nags (not explicit due times) to the end of the quiet window.
+- Quiet hours (start/end to the minute, may cross midnight) push nags (not explicit due times) to the end of the quiet window. Nags only fire on the chosen days; other days are quiet all day.
 - Alarms are rebooked after reboot and app updates.
 - Tasks without a due time don't nag; they sit in "No date".
 

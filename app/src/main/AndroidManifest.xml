@@ -38,12 +38,23 @@
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
             </intent-filter>
+        </activity>
+
+        <!-- Pop-up over the current app: power button, shared text, selected text. -->
+        <activity
+            android:name=".quickadd.CapturePopupActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/quick_add_label"
+            android:taskAffinity="com.forgetmenot.app.popup"
+            android:theme="@style/Theme.ForgetMeNot.Popup"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.PROCESS_TEXT" />
@@ -51,14 +62,6 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".quickadd.AssistPopupActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:taskAffinity="com.forgetmenot.app.assist"
-            android:theme="@style/Theme.ForgetMeNot.Popup"
-            android:windowSoftInputMode="adjustResize" />
 
         <!-- Holding the power button: Forget-me-not as the digital assistant app. -->
         <service

@@ -6,11 +6,12 @@ Capture a task in seconds, or hand it a Teams screenshot, and it nags you until 
 ## Features
 
 - **Quick capture**: a "+ Task" Quick Settings tile, an optional pinned "+ Add task" notification, and an in-app Add button.
-- **Hold the power button**: with Forget-me-not set as your digital assistant app, holding the power button reads what's on screen (e.g. a Teams chat) and pops up a drafted task over it. No screenshot needed.
+- **Hold the power button**: with Forget-me-not set as your digital assistant app, holding the power button pops up the text on screen (e.g. a Teams chat). Tap the message, tap **Save**. No AI needed; optionally Claude can draft the task instead.
+- **One-tap save**: highlight text in any app (or share it) and pick **Add to Forget-me-not**. It's saved immediately, with a pop-up to change the due time, mark it high priority, edit or undo.
 - **Copied messages**: copy a Teams message, open quick add, tap **Use this**.
 - **Screenshots**: share a screenshot to Forget-me-not (or pick one in quick add). Claude reads the chat and drafts the task: what, who asked, details (codes copied exactly), when it's due, and warnings for anything cut off.
 - **Text from anywhere**: works from the share sheet and the text-selection menu.
-- **Nagging reminders**: once a task is due it re-notifies every 15m–4h until you tap **Done**, **+1 hour** or **Tomorrow**. Quiet hours (default 7pm–8am) pause nags.
+- **Nagging reminders**: once a task is due it re-notifies every 15m–4h until you tap **Done**, **+1 hour** or **Tomorrow**. Quiet hours (to the minute, default 7pm–8am) and days off pause nags.
 - **Edit anything**: title, details, who asked, due time, priority, nag interval, notes.
 - Everything is stored on the phone.
 

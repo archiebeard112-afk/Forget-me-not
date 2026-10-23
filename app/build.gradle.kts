@@ -75,4 +75,6 @@ dependencies {
     ksp("androidx.room:room-compiler:$room")
 
     implementation("com.anthropic:anthropic-java:2.34.0")
+
+    testImplementation("junit:junit:4.13.2")
 }

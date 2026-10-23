@@ -9,11 +9,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import com.forgetmenot.app.MainActivity
 import com.forgetmenot.app.ui.ForgetMeNotTheme
 
 /**
- * Fast capture: opened from the "+ Task" tile, the pinned notification, the Add button,
- * the share sheet (text or screenshot), or the text-selection menu.
+ * Full-screen quick add: opened from the "+ Task" tile, the pinned notification, the Add button,
+ * or a shared screenshot. Shared and selected text go to [CapturePopupActivity] instead.
  */
 class QuickAddActivity : ComponentActivity() {
     private val vm: QuickAddViewModel by viewModels()
@@ -25,7 +26,7 @@ class QuickAddActivity : ComponentActivity() {
         if (savedInstanceState == null) handleShare(intent)
         setContent {
             ForgetMeNotTheme {
-                QuickAddScreen(vm, onClose = { finish() })
+                QuickAddScreen(vm, onClose = { finish() }, onEdit = ::openTask)
             }
         }
     }
@@ -43,6 +44,15 @@ class QuickAddActivity : ComponentActivity() {
         }
     }
 
+    private fun openTask(id: Long) {
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .putExtra(MainActivity.EXTRA_TASK_ID, id)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        )
+        finish()
+    }
+
     private fun handleShare(intent: Intent?) {
         intent ?: return
         when (intent.action) {
@@ -56,12 +66,6 @@ class QuickAddActivity : ComponentActivity() {
                     vm.loadImage(stream)
                 } else {
                     intent.getStringExtra(Intent.EXTRA_TEXT)?.let { vm.input = it; vm.source = "Shared message" }
-                }
-                checkedClipboard = true
-            }
-            Intent.ACTION_PROCESS_TEXT -> {
-                intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.let {
-                    vm.input = it.toString(); vm.source = "Selected text"
                 }
                 checkedClipboard = true
             }
