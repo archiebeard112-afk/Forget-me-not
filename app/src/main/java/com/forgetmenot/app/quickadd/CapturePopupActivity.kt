@@ -18,7 +18,7 @@ import com.forgetmenot.app.ui.ForgetMeNotTheme
 /**
  * Shown over the current app: after holding the power button (halo: tap the message on
  * screen, or a list of the screen's text), or when text is shared / selected into
- * Forget-me-not (saved in one tap).
+ * ForgetMeNot (saved in one tap).
  */
 class CapturePopupActivity : ComponentActivity() {
     private val vm: QuickAddViewModel by viewModels()

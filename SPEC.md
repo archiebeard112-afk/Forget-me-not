@@ -1,4 +1,4 @@
-# Forget-me-not: spec
+# ForgetMeNot: spec
 
 ## Problem
 Requests arrive all day in Microsoft Teams. They're acknowledged (👍) and then forgotten until someone follows up ("how is this coming along?").
@@ -16,7 +16,7 @@ Requests arrive all day in Microsoft Teams. They're acknowledged (👍) and then
 | Quick Settings tile "+ Task" | Unlocked: quick add. Locked: an add-only pop-up over the lock screen (`showWhenLocked`); Save requires `BiometricPrompt` (fingerprint/face, PIN fallback) and the phone stays locked. If the prompt can't show over the lock screen, falls back to the system unlock. Settings can turn this off (then unlock first). |
 | Pinned notification | Optional, always-visible "+ Add task". |
 | Copy → quick add | Teams on Android has no share for messages; quick add offers the copied text. |
-| Screenshot share | Share sheet → Forget-me-not, or "Pick screenshot" in quick add. |
+| Screenshot share | Share sheet → ForgetMeNot, or "Pick screenshot" in quick add. |
 | Share / select text | `ACTION_SEND` text and `ACTION_PROCESS_TEXT`. |
 
 ## Reading messages with Claude

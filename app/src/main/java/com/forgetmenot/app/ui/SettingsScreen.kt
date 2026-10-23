@@ -85,9 +85,9 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
             val active = remember { AssistService.isActive(context) }
             Text(
                 if (active) {
-                    "✅ Forget-me-not is your digital assistant. Hold the power button on any screen, such as a Teams chat."
+                    "✅ ForgetMeNot is your digital assistant. Hold the power button on any screen, such as a Teams chat."
                 } else {
-                    "Make Forget-me-not your digital assistant app, and holding the power button opens a pop-up with " +
+                    "Make ForgetMeNot your digital assistant app, and holding the power button opens a pop-up with " +
                         "the text on screen. This replaces Google Assistant / Gemini on that button; you can switch back any time."
                 },
                 style = MaterialTheme.typography.bodySmall,
@@ -117,7 +117,7 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Save in one tap")
                     Text(
-                        "Picking \"Add to Forget-me-not\" saves straight away, then lets you adjust or undo.",
+                        "Picking \"Add to ForgetMeNot\" saves straight away, then lets you adjust or undo.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -218,7 +218,7 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
             HorizontalDivider()
             Text("Reliable reminders", style = MaterialTheme.typography.titleMedium)
             Text(
-                if (unrestricted) "✅ Battery optimization is off for Forget-me-not."
+                if (unrestricted) "✅ Battery optimization is off for ForgetMeNot."
                 else "Samsung and other phones may silently kill reminders. Turn off battery optimization for this app.",
                 style = MaterialTheme.typography.bodySmall,
             )

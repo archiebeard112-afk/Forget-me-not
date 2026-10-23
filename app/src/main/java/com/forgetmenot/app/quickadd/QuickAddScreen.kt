@@ -214,7 +214,7 @@ private fun ConfirmPhase(vm: QuickAddViewModel, onClose: () -> Unit) {
         Button(
             onClick = {
                 vm.confirmPending {
-                    Toast.makeText(context, "Saved to Forget-me-not", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Saved to ForgetMeNot", Toast.LENGTH_SHORT).show()
                     onClose()
                 }
             },

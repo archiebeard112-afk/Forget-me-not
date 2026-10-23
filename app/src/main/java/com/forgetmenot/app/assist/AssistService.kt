@@ -5,7 +5,7 @@ import android.content.Context
 import android.service.voice.VoiceInteractionService
 
 /**
- * Lets Forget-me-not be picked as the phone's digital assistant, so holding the
+ * Lets ForgetMeNot be picked as the phone's digital assistant, so holding the
  * power button opens quick add with whatever is on screen.
  */
 class AssistService : VoiceInteractionService() {

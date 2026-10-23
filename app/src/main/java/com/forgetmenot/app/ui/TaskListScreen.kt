@@ -71,7 +71,7 @@ fun TaskListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Forget-me-not") },
+                title = { Text("ForgetMeNot") },
                 actions = {
                     IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") }
                 },
@@ -96,7 +96,7 @@ fun TaskListScreen(
                         Text("Nothing to remember 🌼", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.size(8.dp))
                         Text(
-                            "Tap Add, use the \"+ Task\" tile, or share a Teams screenshot to Forget-me-not.",
+                            "Tap Add, use the \"+ Task\" tile, or share a Teams screenshot to ForgetMeNot.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

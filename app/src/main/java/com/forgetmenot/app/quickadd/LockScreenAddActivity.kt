@@ -143,7 +143,7 @@ class LockScreenAddActivity : FragmentActivity() {
         })
         prompt.authenticate(
             BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Save to Forget-me-not")
+                .setTitle("Save to ForgetMeNot")
                 .setSubtitle(text.lineSequence().first().take(60))
                 .setAllowedAuthenticators(authenticators)
                 .build()
@@ -163,7 +163,7 @@ class LockScreenAddActivity : FragmentActivity() {
         )
         lifecycleScope.launch {
             app.repository.save(task)
-            Toast.makeText(this@LockScreenAddActivity, "Saved to Forget-me-not", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@LockScreenAddActivity, "Saved to ForgetMeNot", Toast.LENGTH_SHORT).show()
             finish()
         }
     }

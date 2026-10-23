@@ -89,7 +89,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Holding the power button: Forget-me-not as the digital assistant app. -->
+        <!-- Holding the power button: ForgetMeNot as the digital assistant app. -->
         <service
             android:name=".assist.AssistService"
             android:exported="true"
