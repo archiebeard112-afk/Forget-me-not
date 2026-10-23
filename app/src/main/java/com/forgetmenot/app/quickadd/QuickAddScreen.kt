@@ -148,7 +148,7 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
     }
     Column(modifier) {
         Text(
-            "Tap the message you want to remember. Tap more lines to add them to the same task.",
+            "Tap the message you want to remember. It's saved straight away; you can change or undo it next.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -160,7 +160,7 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
             itemsIndexed(vm.screenLines) { i, line ->
                 val selected = i in vm.selectedLines
                 Surface(
-                    onClick = { vm.toggleLine(i) },
+                    onClick = { vm.pickAndSave(i) },
                     shape = RoundedCornerShape(12.dp),
                     color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                     border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
@@ -171,14 +171,12 @@ private fun PickPhase(vm: QuickAddViewModel, modifier: Modifier) {
             }
         }
         vm.error?.let { WarningCard(it) }
-        Row(Modifier.padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (vm.hasApiKey) {
-                OutlinedButton(onClick = vm::read, modifier = Modifier.weight(1f)) { Text("✨ Let Claude read it") }
+        if (vm.hasApiKey) {
+            OutlinedButton(onClick = vm::read, modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
+                Text("✨ Let Claude read it instead")
             }
-            val n = vm.selectedLines.size
-            Button(onClick = vm::savePicked, enabled = n > 0, modifier = Modifier.weight(1f)) {
-                Text(if (n <= 1) "Save" else "Save $n lines")
-            }
+        } else {
+            Spacer(Modifier.size(12.dp))
         }
     }
 }

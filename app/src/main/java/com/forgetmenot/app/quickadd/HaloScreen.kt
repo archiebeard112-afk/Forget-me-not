@@ -1,5 +1,7 @@
 package com.forgetmenot.app.quickadd
 
+import android.os.Build
+import android.view.RoundedCorner
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -12,15 +14,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,8 +43,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.forgetmenot.app.assist.ScreenLines
 
@@ -67,7 +66,14 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
         animationSpec = infiniteRepeatable(tween(1400), RepeatMode.Reverse),
         label = "pulse",
     )
-    val count = vm.selectedLines.size
+    val density = LocalDensity.current
+    // Follow the phone's rounded screen corners where Android reports them.
+    val screenCorner = remember {
+        val reported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            view.rootWindowInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)?.radius
+        } else null
+        reported?.toFloat() ?: with(density) { 40.dp.toPx() }
+    }
 
     Box(
         Modifier.fillMaxSize()
@@ -80,10 +86,7 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                 val slop = 10.dp.toPx()
                 detectTapGestures { pos ->
                     val hit = ScreenLines.itemAt(vm.screenItems, pos.x + origin.x, pos.y + origin.y, slop)
-                    when {
-                        hit != null -> vm.toggleLine(hit)
-                        vm.selectedLines.isEmpty() -> onClose()
-                    }
+                    if (hit != null) vm.pickAndSave(hit) else if (vm.selectedLines.isEmpty()) onClose()
                 }
             }
             .drawBehind {
@@ -92,9 +95,17 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                     start = Offset.Zero,
                     end = Offset(size.width, size.height),
                 )
-                val corner = CornerRadius(40.dp.toPx())
+                // Each stroke sits fully inside the screen so all four edges show.
                 for ((width, alpha) in listOf(28.dp to 0.12f, 16.dp to 0.25f, 5.dp to 0.95f)) {
-                    drawRoundRect(glow, cornerRadius = corner, style = Stroke(width.toPx()), alpha = alpha * pulse)
+                    val half = width.toPx() / 2
+                    drawRoundRect(
+                        glow,
+                        topLeft = Offset(half, half),
+                        size = Size(size.width - 2 * half, size.height - 2 * half),
+                        cornerRadius = CornerRadius((screenCorner - half).coerceAtLeast(0f)),
+                        style = Stroke(width.toPx()),
+                        alpha = alpha * pulse,
+                    )
                 }
                 val pad = 6.dp.toPx()
                 val radius = CornerRadius(12.dp.toPx())
@@ -116,36 +127,9 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                 .swallowTaps(),
         ) {
             Row(Modifier.padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (count == 0) "Tap the message to save" else "Tap more to add, or Save",
-                    style = MaterialTheme.typography.labelLarge,
-                )
+                Text("Tap the message to save", style = MaterialTheme.typography.labelLarge)
                 TextButton(onClick = vm::showList) { Text("List") }
                 IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close") }
-            }
-        }
-
-        if (count > 0) {
-            val preview = vm.selectedLines.sorted().joinToString(" · ") { vm.screenLines[it] }
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                shadowElevation = 8.dp,
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(16.dp)
-                    .fillMaxWidth()
-                    .swallowTaps(),
-            ) {
-                Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        preview,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
-                    )
-                    Button(onClick = vm::savePicked) { Text(if (count == 1) "Save" else "Save $count") }
-                }
             }
         }
     }

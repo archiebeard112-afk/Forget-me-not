@@ -20,6 +20,7 @@ import com.forgetmenot.app.data.DueDefaults
 import com.forgetmenot.app.data.Prefs
 import com.forgetmenot.app.data.Task
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -136,12 +137,18 @@ class QuickAddViewModel(application: Application) : AndroidViewModel(application
         selectedLines.clear()
     }
 
-    fun toggleLine(index: Int) {
-        if (index in selectedLines) selectedLines.remove(index) else selectedLines.add(index)
+    /** Tapping a message saves it: outline it for a moment, then move on to the saved options. */
+    fun pickAndSave(index: Int) {
+        if (selectedLines.isNotEmpty()) return // already saving
+        selectedLines.add(index)
+        viewModelScope.launch {
+            delay(250)
+            savePicked()
+        }
     }
 
     /** Save the lines picked from the screen. */
-    fun savePicked() {
+    private fun savePicked() {
         if (selectedLines.isEmpty()) return
         val sorted = selectedLines.sorted()
         val text = sorted.joinToString("\n") { screenLines[it] }
