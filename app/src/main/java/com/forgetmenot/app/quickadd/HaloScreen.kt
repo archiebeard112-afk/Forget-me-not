@@ -148,6 +148,8 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
         Surface(
             shape = RoundedCornerShape(50),
             color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.96f),
+            // Set explicitly: a see-through background has no matching text colour, so it fell back to black.
+            contentColor = MaterialTheme.colorScheme.onSurface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             shadowElevation = 10.dp,
             modifier = Modifier.align(Alignment.TopCenter)
@@ -164,6 +166,7 @@ fun HaloScreen(vm: QuickAddViewModel, onClose: () -> Unit) {
                 Text(
                     "Tap a message",
                     style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(end = 4.dp),
                 )
