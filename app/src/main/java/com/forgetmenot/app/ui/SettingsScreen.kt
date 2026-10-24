@@ -62,6 +62,7 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
     var model by remember { mutableStateOf(prefs.model) }
     var nag by remember { mutableIntStateOf(prefs.defaultNagMinutes) }
     var quiet by remember { mutableStateOf(prefs.quietHoursEnabled) }
+    var alarm by remember { mutableStateOf(prefs.alarmVibration) }
     var quietStart by remember { mutableIntStateOf(prefs.quietStartMinute) }
     var quietEnd by remember { mutableIntStateOf(prefs.quietEndMinute) }
     var nagDays by remember { mutableStateOf(prefs.nagDays) }
@@ -148,6 +149,12 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
 
             SectionLabel("Nagging")
             SettingsGroup {
+                SwitchRow(
+                    LineIcons.Bell, "Vibrate like an alarm",
+                    "Strong vibration for up to 30 seconds, even on mute. Stops when you answer it.",
+                    alarm,
+                ) { alarm = it; prefs.alarmVibration = it }
+                GroupDivider()
                 SettingRow(LineIcons.Bell, "Remind me every", "Default for new reminders")
                 PillChoices(NAG_OPTIONS.map { it to formatNag(it) }, nag) { nag = it; prefs.defaultNagMinutes = it }
                 GroupDivider()

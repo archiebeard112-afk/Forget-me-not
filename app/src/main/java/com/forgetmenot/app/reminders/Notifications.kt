@@ -33,7 +33,8 @@ object Notifications {
         )
     }
 
-    fun showReminder(context: Context, task: Task) {
+    /** Shows the reminder; with alarm vibration on, it also buzzes like an alarm. */
+    fun showReminder(context: Context, task: Task, alarmVibration: Boolean = false) {
         val id = task.id.toInt()
         val open = PendingIntent.getActivity(
             context, id,
@@ -60,7 +61,11 @@ object Notifications {
             .addAction(0, "Done", action(context, task.id, ReminderReceiver.ACTION_DONE))
             .addAction(0, "+1 hour", action(context, task.id, ReminderReceiver.ACTION_SNOOZE_HOUR))
             .addAction(0, "Tomorrow", action(context, task.id, ReminderReceiver.ACTION_TOMORROW))
+            // Swiping it away stops the alarm vibration.
+            .setDeleteIntent(action(context, task.id, ReminderReceiver.ACTION_DISMISSED))
             .build()
+        if (alarmVibration && AlarmBuzzService.start(context, id, n)) return
+        if (alarmVibration) AlarmBuzzService.buzz(context)
         if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
             try {
                 NotificationManagerCompat.from(context).notify(id, n)
@@ -105,7 +110,8 @@ object Notifications {
             taskId.toInt() * 10 + when (action) {
                 ReminderReceiver.ACTION_DONE -> 1
                 ReminderReceiver.ACTION_SNOOZE_HOUR -> 2
-                else -> 3
+                ReminderReceiver.ACTION_TOMORROW -> 3
+                else -> 4
             },
             Intent(context, ReminderReceiver::class.java)
                 .setAction(action)

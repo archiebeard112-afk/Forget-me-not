@@ -33,7 +33,8 @@ Expected: one task for request (2), details with the code copied exactly, reques
 
 ## Reminders
 - Exact alarm at the due time (or immediately for ASAP), then every `nagMinutes` until done.
-- Notification actions: Done, +1 hour, Tomorrow (9am). Tapping opens the task to edit.
+- Notification actions: Done, +1 hour, Tomorrow (6am). Tapping opens the task to edit.
+- Alarm vibration (on by default): a short foreground service shows the reminder and vibrates a repeating pattern with alarm usage, so it works on mute, for up to 30 s. Done, snooze, opening or swiping the reminder stops it.
 - Quiet hours (start/end to the minute, may cross midnight) push nags (not explicit due times) to the end of the quiet window. Nags only fire on the chosen days; other days are quiet all day.
 - Alarms are rebooked after reboot and app updates.
 - Tasks without a due time don't nag; they sit in "No date".

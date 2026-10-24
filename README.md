@@ -12,7 +12,7 @@ Capture a task in seconds, or hand it a Teams screenshot, and it nags you until 
 - **Copied messages**: copy a Teams message, open quick add, tap **Use this**.
 - **Screenshots**: share a screenshot to ForgetMeNot (or pick one in quick add). Claude reads the chat and drafts the task: what, who asked, details (codes copied exactly), when it's due, and warnings for anything cut off.
 - **Text from anywhere**: works from the share sheet and the text-selection menu.
-- **Nagging reminders**: once a task is due it re-notifies every 15m–4h until you tap **Done**, **+1 hour** or **Tomorrow**. Quiet hours (to the minute, default 7pm–8am) and days off pause nags.
+- **Nagging reminders**: once a task is due it re-notifies every 15m–4h until you tap **Done**, **+1 hour** or **Tomorrow**. Quiet hours (to the minute, default 7pm–8am) and days off pause nags. Each reminder vibrates like an alarm (even on mute) for up to 30 seconds, until you answer it.
 - **Edit anything**: title, details, who asked, due time, priority, nag interval, notes.
 - Everything is stored on the phone.
 

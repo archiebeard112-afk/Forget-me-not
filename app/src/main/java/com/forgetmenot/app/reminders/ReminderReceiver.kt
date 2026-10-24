@@ -19,11 +19,13 @@ class ReminderReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val repo = app.repository
+                // Any answer to a reminder stops the alarm vibration.
+                if (intent.action != ACTION_FIRE) AlarmBuzzService.stop(context)
                 when (intent.action) {
                     ACTION_FIRE -> {
                         val task = repo.get(taskId) ?: return@launch
                         if (task.done) return@launch
-                        Notifications.showReminder(context, task)
+                        Notifications.showReminder(context, task, app.prefs.alarmVibration)
                         // Keep nagging until the task is done or snoozed.
                         val next = QuietHours.adjust(
                             System.currentTimeMillis() + task.nagMinutes * 60_000L, app.prefs,
@@ -55,5 +57,6 @@ class ReminderReceiver : BroadcastReceiver() {
         const val ACTION_DONE = "com.forgetmenot.app.DONE"
         const val ACTION_SNOOZE_HOUR = "com.forgetmenot.app.SNOOZE_HOUR"
         const val ACTION_TOMORROW = "com.forgetmenot.app.TOMORROW"
+        const val ACTION_DISMISSED = "com.forgetmenot.app.DISMISSED"
     }
 }

@@ -19,6 +19,11 @@ class Prefs(context: Context) {
         get() = sp.getInt("nag_minutes", 60)
         set(v) = sp.edit().putInt("nag_minutes", v).apply()
 
+    /** Reminders vibrate like an alarm (even on mute) for up to 30 seconds. */
+    var alarmVibration: Boolean
+        get() = sp.getBoolean("alarm_vibration", true)
+        set(v) = sp.edit().putBoolean("alarm_vibration", v).apply()
+
     var quietHoursEnabled: Boolean
         get() = sp.getBoolean("quiet_enabled", true)
         set(v) = sp.edit().putBoolean("quiet_enabled", v).apply()

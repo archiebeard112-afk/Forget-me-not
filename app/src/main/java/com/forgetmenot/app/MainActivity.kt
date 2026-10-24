@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forgetmenot.app.quickadd.QuickAddActivity
+import com.forgetmenot.app.reminders.AlarmBuzzService
 import com.forgetmenot.app.ui.EditTaskScreen
 import com.forgetmenot.app.ui.ForgetMeNotTheme
 import com.forgetmenot.app.ui.MainViewModel
@@ -85,6 +86,8 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val id = intent?.getLongExtra(EXTRA_TASK_ID, -1L) ?: -1L
+        // Opened from a reminder: stop the alarm vibration.
+        if (id > 0) AlarmBuzzService.stop(this)
         if (id > 0) screen = Screen.Edit(id)
     }
 
