@@ -2,6 +2,8 @@ name: Build APK
 
 on:
   push:
+    paths-ignore:
+      - 'dungeon-in-a-minute/**'
   workflow_dispatch:
 
 permissions:
