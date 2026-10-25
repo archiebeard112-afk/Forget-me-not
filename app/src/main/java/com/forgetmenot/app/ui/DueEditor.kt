@@ -32,33 +32,6 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/** Shows the due time plus one-tap shortcuts and a custom date & time picker. */
-@Composable
-fun DueEditor(dueAt: Long?, onChange: (Long?) -> Unit) {
-    var custom by remember { mutableStateOf(false) }
-    Column {
-        Text(
-            if (dueAt == null) "No due time · no reminders" else "Due: ${formatDue(dueAt)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (dueAt != null && dueAt <= System.currentTimeMillis()) Urgent else MaterialTheme.colorScheme.onSurface,
-        )
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AssistChip(onClick = { onChange(System.currentTimeMillis()) }, label = { Text("ASAP") })
-            AssistChip(onClick = { onChange(System.currentTimeMillis() + 60 * 60_000L) }, label = { Text("In 1h") })
-            AssistChip(onClick = { onChange(DueDefaults.tomorrowMorning()) }, label = { Text("Tomorrow 6am") })
-            AssistChip(onClick = { custom = true }, label = { Text("Custom") })
-            if (dueAt != null) AssistChip(onClick = { onChange(null) }, label = { Text("Clear") })
-        }
-    }
-    if (custom) {
-        CustomDueDialog(
-            initial = dueAt,
-            onDismiss = { custom = false },
-            onConfirm = { custom = false; onChange(it) },
-        )
-    }
-}
-
 /** Pick a date, then a time. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

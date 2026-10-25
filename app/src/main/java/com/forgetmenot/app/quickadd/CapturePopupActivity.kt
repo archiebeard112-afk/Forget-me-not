@@ -52,7 +52,7 @@ class CapturePopupActivity : ComponentActivity() {
                 vm.source = if (intent.action == Intent.ACTION_PROCESS_TEXT) "Selected text" else "Shared message"
                 if (app.prefs.instantSave && sharedText.isNotBlank()) vm.saveShared(sharedText) else vm.input = sharedText
             } else {
-                AssistInbox.take()?.let { vm.loadFromScreen(it.screenItems, it.screenshot, it.appPackage) }
+                AssistInbox.take()?.let { vm.loadFromScreen(it.screenItems, it.appPackage) }
             }
         }
         setContent {

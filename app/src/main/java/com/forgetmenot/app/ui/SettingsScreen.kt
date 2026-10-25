@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,12 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.forgetmenot.app.assist.AssistService
@@ -58,8 +54,6 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
     val context = LocalContext.current
-    var apiKey by remember { mutableStateOf(prefs.apiKey) }
-    var model by remember { mutableStateOf(prefs.model) }
     var nag by remember { mutableIntStateOf(prefs.defaultNagMinutes) }
     var quiet by remember { mutableStateOf(prefs.quietHoursEnabled) }
     var alarm by remember { mutableStateOf(prefs.alarmVibration) }
@@ -101,10 +95,6 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
                 GroupDivider()
                 SelectRow(LineIcons.List, "List", "Pick from the text on screen", powerMode == Prefs.POWER_PICK) {
                     powerMode = Prefs.POWER_PICK; prefs.powerButtonMode = Prefs.POWER_PICK
-                }
-                GroupDivider()
-                SelectRow(LineIcons.Sparkle, "Claude", "Claude reads the screen and drafts it (needs API key)", powerMode == Prefs.POWER_CLAUDE) {
-                    powerMode = Prefs.POWER_CLAUDE; prefs.powerButtonMode = Prefs.POWER_CLAUDE
                 }
                 GroupDivider()
                 SettingRow(
@@ -181,19 +171,6 @@ fun SettingsScreen(prefs: Prefs, onBack: () -> Unit) {
                 }
             }
 
-            SectionLabel("Claude (optional)")
-            SettingsGroup {
-                SettingRow(LineIcons.Key, "API key", if (apiKey.isBlank()) "Paste a key from console.anthropic.com" else "Saved on this phone")
-                ApiKeyField(apiKey) { apiKey = it; prefs.apiKey = it }
-                Prefs.MODELS.forEach { (id, label) ->
-                    GroupDivider()
-                    SelectRow(null, label.substringBefore(" ("), label.substringAfter("(", "").removeSuffix(")").ifEmpty { null }, model == id) {
-                        model = id; prefs.model = id
-                    }
-                }
-            }
-            Footnote("Only needed for Claude reading screenshots and messages. Everything else works without it.")
-
             SectionLabel("Reliable reminders")
             SettingsGroup {
                 SettingRow(
@@ -256,29 +233,6 @@ private fun TimeRow(label: String, minuteOfDay: Int, onChange: (Int) -> Unit) {
             TimePickerDialog(context, { _, h, m -> onChange(h * 60 + m) }, minuteOfDay / 60, minuteOfDay % 60, false).show()
         }
     }
-}
-
-@Composable
-private fun ApiKeyField(value: String, onChange: (String) -> Unit) {
-    val style = TextStyle(fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
-    BasicTextField(
-        value = value,
-        onValueChange = onChange,
-        singleLine = true,
-        textStyle = style,
-        visualTransformation = PasswordVisualTransformation(),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-        decorationBox = { inner ->
-            Box(
-                Modifier.fillMaxWidth().clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                if (value.isEmpty()) Text("sk-ant-…", style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
-                inner()
-            }
-        },
-    )
 }
 
 private val clockFormat = DateTimeFormatter.ofPattern("h:mm a")

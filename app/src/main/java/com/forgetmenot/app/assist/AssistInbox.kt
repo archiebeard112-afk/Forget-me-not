@@ -1,12 +1,11 @@
 package com.forgetmenot.app.assist
 
-import android.graphics.Bitmap
 import android.service.voice.VoiceInteractionSession
 import java.lang.ref.WeakReference
 
-/** What the assist session captured, handed to the pop-up (a screenshot is too big for an Intent). */
+/** What the assist session captured, handed to the pop-up. */
 object AssistInbox {
-    data class Capture(val screenItems: List<ScreenItem>, val screenshot: Bitmap?, val appPackage: String?)
+    data class Capture(val screenItems: List<ScreenItem>, val appPackage: String?)
 
     private var capture: Capture? = null
     private var session: WeakReference<VoiceInteractionSession>? = null

@@ -3,17 +3,9 @@ package com.forgetmenot.app.data
 import android.content.Context
 import java.time.DayOfWeek
 
-/** Small settings store. The API key stays on the phone and is only sent to Anthropic. */
+/** Small settings store. Everything stays on the phone. */
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-
-    var apiKey: String
-        get() = sp.getString("api_key", "") ?: ""
-        set(v) = sp.edit().putString("api_key", v.trim()).apply()
-
-    var model: String
-        get() = sp.getString("model", DEFAULT_MODEL) ?: DEFAULT_MODEL
-        set(v) = sp.edit().putString("model", v).apply()
 
     var defaultNagMinutes: Int
         get() = sp.getInt("nag_minutes", 60)
@@ -64,16 +56,11 @@ class Prefs(context: Context) {
 
     /** What holding the power button does; one of the POWER_* constants. */
     var powerButtonMode: String
-        get() = sp.getString("power_mode", POWER_HALO) ?: POWER_HALO
+        // "claude" was an option in older versions; it now falls back to the halo.
+        get() = sp.getString("power_mode", POWER_HALO).takeIf { it == POWER_PICK } ?: POWER_HALO
         set(v) = sp.edit().putString("power_mode", v).apply()
 
     companion object {
-        const val DEFAULT_MODEL = "claude-opus-5-5"
-        val MODELS = listOf(
-            "claude-opus-5-5" to "Claude Opus 5.5 (most accurate)",
-            "claude-haiku-5-5" to "Claude Haiku 5.5 (cheapest, fastest)",
-        )
-
         const val DUE_IN_1H = "in_1h"
         const val DUE_5PM = "5pm"
         const val DUE_TOMORROW = "tomorrow"
@@ -87,6 +74,5 @@ class Prefs(context: Context) {
 
         const val POWER_HALO = "halo"
         const val POWER_PICK = "pick"
-        const val POWER_CLAUDE = "claude"
     }
 }

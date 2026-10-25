@@ -14,8 +14,9 @@ import androidx.annotation.RequiresApi
 import com.forgetmenot.app.quickadd.CapturePopupActivity
 
 /**
- * Runs when the power button is held. Collects the screen's text and where it sits (and a
- * screenshot when the user allows it), then opens the pop-up over the current app.
+ * Runs when the power button is held. Collects the screen's text and where it sits, then opens
+ * the pop-up over the current app. If the phone also sends a screenshot, it's only used as the
+ * signal that the screen capture is complete.
  */
 class AssistSession(context: Context) : VoiceInteractionSession(context) {
     private val handler = Handler(Looper.getMainLooper())
@@ -70,7 +71,7 @@ class AssistSession(context: Context) : VoiceInteractionSession(context) {
         if (launched) return
         launched = true
         handler.removeCallbacksAndMessages(null)
-        AssistInbox.put(AssistInbox.Capture(screenItems, screenshot, appPackage), this)
+        AssistInbox.put(AssistInbox.Capture(screenItems, appPackage), this)
         val intent = Intent(context, CapturePopupActivity::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             startAssistantActivity(intent)
